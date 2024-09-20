@@ -1,4 +1,8 @@
+using API.Models;
+using API.Services;
 using Carter;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCarter();
-
+builder.Services.AddSingleton<IDatabaseProvider,DatabaseProvider>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
