@@ -23,7 +23,6 @@ public class Employee
     /// <summary>
     /// Contact for the employee
     /// </summary>
-    [BsonId]
     [Phone]
     public string PhoneNumber { get; set; }
     /// <summary>
