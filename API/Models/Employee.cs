@@ -9,8 +9,9 @@ public class Employee
     /// <summary>
     /// Id in database, if already exists
     /// </summary>
-
+    [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
+    [BsonIgnoreIfNull]
     public ObjectId? Id { get; set; }
     /// <summary>
     /// First name of the employee
@@ -28,7 +29,6 @@ public class Employee
     /// <summary>
     /// Email to notify the employee
     /// </summary>
-    [BsonId]
     [EmailAddress]
     public string Email { get; set; }
 

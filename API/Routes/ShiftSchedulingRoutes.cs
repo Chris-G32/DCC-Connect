@@ -30,8 +30,6 @@ public class ShiftSchedulingRoutes : CarterModule
         {
             return Results.Problem(e.Message);
         }
-
-            
     }
     public async Task<IResult> AssignShift(ShiftAssignment assignment, HttpRequest request)
     {
@@ -53,7 +51,7 @@ public class ShiftSchedulingRoutes : CarterModule
     public async Task<IResult> CreateShift(Shift shift, HttpRequest request)
     {
         var collection = _databaseProvider.Database.GetCollection<Employee>("employees");
-        var res = await collection.FindAsync(o => o.FirstName == "John");
+        var res = await collection.FindAsync(o => o.FirstName == "Cristopher");
 
         return Results.Ok(res.First().LastName);
     }
