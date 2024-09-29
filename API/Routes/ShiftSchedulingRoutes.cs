@@ -11,48 +11,70 @@ namespace API.Routes;
 public class ShiftSchedulingRoutes : CarterModule
 {
     IDatabaseProvider _databaseProvider;
-    public ShiftSchedulingRoutes(IDatabaseProvider dbProvider) : base() { _databaseProvider = dbProvider; }
+    private readonly IShiftScheduler _shiftScheduler;
+    public ShiftSchedulingRoutes(IDatabaseProvider dbProvider, IShiftScheduler scheduler) : base()
+    {
+        _databaseProvider = dbProvider;
+        _shiftScheduler = scheduler;
+    }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPut("shift/create", CreateShift);
+        app.MapPut("shift/delete", DeleteShift);
+
         app.MapPut("shift/assign", AssignShift);
-        app.MapPut("createEmployee", createEmployee);
+        app.MapPut("shift/unassign", UnassignShift);
     }
-    public async Task<IResult> createEmployee(Employee employee)
+    public async Task<IResult> UnassignShift(string assignmentID, HttpRequest request)
     {
-        var collection = _databaseProvider.Database.GetCollection<Employee>("employees");
         try
         {
-            collection.InsertOne(employee);
-            return Results.Ok("Created employee successfully.");
+            _shiftScheduler.unassignShift(assignmentID);
         }
         catch (Exception e)
         {
-            return Results.Problem(e.Message);
+            return Results.Problem("Error unassinging shift");
         }
+
+        return Results.Ok("Assignment removed!");
+    }
+    public async Task<IResult> DeleteShift(string shiftID, HttpRequest request)
+    {
+        try
+        {
+            _shiftScheduler.deleteShift(shiftID);
+        }
+        catch (Exception e)
+        {
+            return Results.Problem($"Error deleting shift: {e.Message}");
+        }
+
+        return Results.Ok("Shift deleted!");
     }
     public async Task<IResult> AssignShift(ShiftAssignment assignment, HttpRequest request)
     {
-
-        // Create or get the employees collection
-        var collection = _databaseProvider.Database.GetCollection<Employee>("employees");
-
-        Employee employee = new()
+        try
         {
-            FirstName = "John",
-            LastName = "Doe",
-            PhoneNumber = "555-555-5555",
-            Email = "TENP@gmail.com"
-        };
-        collection.InsertOne(employee);
+            _shiftScheduler.assignShift(assignment);
+        }
+        catch (Exception e)
+        {
+            return Results.Problem("Failed to assign shift. Maybe someone is already assigned to it?");
+        }
 
         return Results.Ok("Shift assigned!");
     }
     public async Task<IResult> CreateShift(Shift shift, HttpRequest request)
     {
-        var collection = _databaseProvider.Database.GetCollection<Employee>("employees");
-        var res = await collection.FindAsync(o => o.FirstName == "Cristopher");
+        try
+        {
+            _shiftScheduler.createShift(shift);
+        }
+        catch (Exception e)
+        {
+            return Results.Problem("Failed to create shift.");
+        }
 
-        return Results.Ok(res.First().LastName);
+        return Results.Ok("Shift Successfully Created");
     }
 }

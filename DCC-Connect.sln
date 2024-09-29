@@ -10,7 +10,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{5914
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "API", "API\API.csproj", "{DF8D87EE-544E-4286-AFB5-C169FDD5F9FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MockDataCreator", "MockDataCreator\MockDataCreator.csproj", "{47B21848-626C-4FBC-97F6-AD32CCAB5F49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MockDataCreator", "MockDataCreator\MockDataCreator.csproj", "{47B21848-626C-4FBC-97F6-AD32CCAB5F49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DCCDatabaseInitializer", "DCCDatabaseInitializer\DCCDatabaseInitializer.csproj", "{9C31E2D0-BFA7-4F53-87C6-3BFD768CA0A2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +28,10 @@ Global
 		{47B21848-626C-4FBC-97F6-AD32CCAB5F49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47B21848-626C-4FBC-97F6-AD32CCAB5F49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47B21848-626C-4FBC-97F6-AD32CCAB5F49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C31E2D0-BFA7-4F53-87C6-3BFD768CA0A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C31E2D0-BFA7-4F53-87C6-3BFD768CA0A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C31E2D0-BFA7-4F53-87C6-3BFD768CA0A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C31E2D0-BFA7-4F53-87C6-3BFD768CA0A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -33,6 +39,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{DF8D87EE-544E-4286-AFB5-C169FDD5F9FF} = {5914145E-0DEA-43DE-9D34-EAD66041D625}
 		{47B21848-626C-4FBC-97F6-AD32CCAB5F49} = {5914145E-0DEA-43DE-9D34-EAD66041D625}
+		{9C31E2D0-BFA7-4F53-87C6-3BFD768CA0A2} = {5914145E-0DEA-43DE-9D34-EAD66041D625}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B52FBB56-5A6D-4152-B8C2-E311E6CD557F}

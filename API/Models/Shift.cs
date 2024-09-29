@@ -1,9 +1,18 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Models;
 
 public class Shift
 {
+    /// <summary>
+    /// Id in database, if already exists
+    /// </summary>
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    [BsonIgnoreIfNull]
+    
+    internal ObjectId? Id { get; set; }
     /// <summary>
     /// Start time of the shift
     /// </summary>
@@ -20,11 +29,4 @@ public class Shift
     /// Role of the employee working the shift
     /// </summary>
     public string Role { get; set; }
-}
-public class AssignedShift : Shift
-{
-    /// <summary>
-    /// Employee assigned to the shift
-    /// </summary>
-    public BsonObjectId AssignedEmployeeID { get; set; }
 }
