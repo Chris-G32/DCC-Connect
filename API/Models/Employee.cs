@@ -12,7 +12,7 @@ public class Employee
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     [BsonIgnoreIfNull]
-    internal ObjectId? Id { get; set; }
+    public ObjectId? Id { get; set; }
     /// <summary>
     /// First name of the employee
     /// </summary>
