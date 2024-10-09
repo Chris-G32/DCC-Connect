@@ -7,6 +7,7 @@ public interface IMongoObject
 {
     public ObjectId? Id { get; set; }
 }
+// Note: This object id thingy may cause problems in swagger, not sure yet could need to copy and paste this code to classes if so
 public class MongoObject: IMongoObject
 {
     /// <summary>
@@ -15,5 +16,5 @@ public class MongoObject: IMongoObject
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     [BsonIgnoreIfNull]
-    public ObjectId? Id { get; set; }
+    internal ObjectId? Id { get; set; }
 }

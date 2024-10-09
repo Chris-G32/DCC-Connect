@@ -8,8 +8,8 @@ public interface ICollectionsProvider
 {
     public IMongoCollection<Employee> Employees { get; }
     public IMongoCollection<Shift> Shifts { get; }
-    public IMongoCollection<ShiftAssignment> AssignedShifts { get; }
-    public IMongoCollection<ShiftOffer> OfferedUpShifts { get; }
+    public IMongoCollection<CoverageRequest> CoverageRequests { get; }
+    public IMongoCollection<TradeOffer> TradeOffers { get; }
     public IMongoCollection<ShiftPickupRequest> TradeRequests { get; }
 
 }
@@ -20,9 +20,9 @@ public class CollectionsProvider(IDatabaseProvider db) : ICollectionsProvider
 
     public IMongoCollection<Shift> Shifts => _db.Database.GetCollection<Shift>(CollectionConstants.ShiftsCollection);
 
-    public IMongoCollection<ShiftAssignment> AssignedShifts => _db.Database.GetCollection<ShiftAssignment>(CollectionConstants.AssignedShiftsCollection);
+    public IMongoCollection<CoverageRequest> CoverageRequests => _db.Database.GetCollection<CoverageRequest>(CollectionConstants.AssignedShiftsCollection);
 
-    public IMongoCollection<ShiftOffer> OfferedUpShifts => _db.Database.GetCollection<ShiftOffer>(CollectionConstants.OfferedUpShifts);
+    public IMongoCollection<TradeOffer> TradeOffers => _db.Database.GetCollection<TradeOffer>(CollectionConstants.TradeOffersCollection);
 
     public IMongoCollection<ShiftPickupRequest> TradeRequests => _db.Database.GetCollection<ShiftPickupRequest>(CollectionConstants.TradeRequestsCollection);
 }
