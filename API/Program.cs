@@ -15,7 +15,8 @@ builder.Services.AddSingleton<IDBClientProvider, MongoClientProvider>();
 builder.Services.AddSingleton<IDatabaseProvider, DatabaseProvider>();
 builder.Services.AddSingleton<ICollectionsProvider, CollectionsProvider>();
 builder.Services.AddSingleton<IShiftScheduler, ShiftScheduler>();
-builder.Services.AddSingleton<ICollectionsProvider, CollectionsProvider>();
+builder.Services.AddSingleton<IShiftRetriever, ShiftRetriever>();
+builder.Services.AddSingleton<IShiftTrader, ShiftTrader>();
 var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

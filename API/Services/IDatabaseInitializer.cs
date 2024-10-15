@@ -15,6 +15,7 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
 {
     private readonly MongoDBSettings _settings = config.GetRequiredSection(DatabaseConstants.DatabaseSettingsSection).Get<MongoDBSettings>() ?? throw new Exception("MongoDB settings not found in appsettings.json");
     private readonly IDBClientProvider _clientProvider = clientProvider;
+    private List<string> _collectionNames;
     /// <summary>
     /// This ensures a field is unique between entries in a collection. If a field is not unique, an exception will be thrown when trying to insert a document with a duplicate value.
     /// No validation is needed to be done before calling this method, as it will be ignored if the index already exists.
@@ -29,44 +30,37 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
         var indexModel = new CreateIndexModel<T>(indexKeysDefinition, indexOptions);
         var res=collection.Indexes.CreateOne(indexModel);
     }
+    private void CreateCollectionIfNotExists(string collectionName,IMongoDatabase db)
+    {
+        //Create Employee Collection
+        if (!_collectionNames.Contains(collectionName))
+        {
+            db.CreateCollection(collectionName);
+        }
+    }
     public void InitializeDatabase()
     {
         var client = _clientProvider.Client;
         var db = client.GetDatabase(DatabaseConstants.DatabaseName);
 
-        var collectionNames = db.ListCollectionNames().ToList();
+        _collectionNames = db.ListCollectionNames().ToList();
         //Create Employee Collection
-        if (!collectionNames.Contains(CollectionConstants.EmployeesCollection))
-        {
-            db.CreateCollection(CollectionConstants.EmployeesCollection);
-        }
-        // A given email can only be assigned to one employee
-        createUniqueIndex(e => e.Email, db.GetCollection<Employee>(CollectionConstants.EmployeesCollection));
+        CreateCollectionIfNotExists(CollectionConstants.EmployeesCollection, db);
 
         //Create Shift Collection
-        if (!collectionNames.Contains(CollectionConstants.ShiftsCollection))
-        {
-            db.CreateCollection(CollectionConstants.ShiftsCollection);
-        }
+        CreateCollectionIfNotExists(CollectionConstants.ShiftsCollection, db);
 
-        if (!collectionNames.Contains(CollectionConstants.AssignedShiftsCollection))
-        {
-            db.CreateCollection(CollectionConstants.AssignedShiftsCollection);
-        }
-        // A given shift can only be assigned to one employee
-        createUniqueIndex(assignment => assignment.ShiftID, db.GetCollection<ShiftAssignment>(CollectionConstants.AssignedShiftsCollection));
+        // Create Coverage Requests Collection
+        CreateCollectionIfNotExists(CollectionConstants.CoverageRequestsCollection, db);
+        // Only one coverage request can exist for a given shift
+        createUniqueIndex(coverage => coverage.ShiftID, db.GetCollection<CoverageRequest>(CollectionConstants.CoverageRequestsCollection));
 
-        if (!collectionNames.Contains(CollectionConstants.OfferedUpShifts))
-        {
-            db.CreateCollection(CollectionConstants.OfferedUpShifts);
-        }
-        createUniqueIndex(offer => offer.ShiftId, db.GetCollection<ShiftOffer>(CollectionConstants.OfferedUpShifts));
+        //Create Trade Offers Collection
+        CreateCollectionIfNotExists(CollectionConstants.TradeOffersCollection, db);
 
-        if (!collectionNames.Contains(CollectionConstants.TradeRequestsCollection))
-        {
-            db.CreateCollection(CollectionConstants.TradeRequestsCollection);
-        }
-        createUniqueIndex(req=>req., db.GetCollection<ShiftPickupRequest>(CollectionConstants.TradeRequestsCollection));
-
+        //Create Time Off Requests Collection
+        CreateCollectionIfNotExists(CollectionConstants.TimeOffRequestsCollection, db);
+        //Create Trade Offers Collection
+        CreateCollectionIfNotExists(CollectionConstants.PickupOffersCollection, db);
     }
 }

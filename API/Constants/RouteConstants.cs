@@ -13,6 +13,7 @@ public class RouteConstants
     public static string EmployeeRouteBase { get; } = "employees/";
     public static string OfferUpShiftRoute { get; } = EmployeeRouteBase + "offerup/";
     public static string CancelOfferUpShiftRoute { get; } = OfferUpShiftRoute + "cancel/";
+    public static string TradeShiftRoute { get; } = EmployeeRouteBase + "trade/";
     public static string PickUpShiftRoute { get; } = EmployeeRouteBase + "pickup/";
 
 }

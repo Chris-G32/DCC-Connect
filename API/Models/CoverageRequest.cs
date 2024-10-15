@@ -1,12 +1,14 @@
 namespace API.Models;
 
-public enum CoverageOptions{
+public enum CoverageOptions
+{
     PickupOnly,
     TradeOnly,
     PickupOrTrade
 }
 
-public class CoverageRequest:MongoObject{
+public class CoverageRequest : MongoObject
+{
     /// <summary>
     /// Start time of the off request
     /// </summary>

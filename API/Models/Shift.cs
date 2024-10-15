@@ -24,5 +24,6 @@ public class Shift:MongoObject
     /// <summary>
     /// Employee assigned to the shift, null or empty if none.
     /// </summary>
+    [BsonIgnoreIfNull]
     public string? EmployeeID { get; set; }
 }
