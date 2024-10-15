@@ -1,4 +1,5 @@
-﻿using API.Models;
+﻿using API.Constants;
+using API.Models;
 using API.Services;
 using Carter;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +20,11 @@ public class ShiftSchedulingRoutes : CarterModule
     }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("shift/create", CreateShift);
-        app.MapPut("shift/delete", DeleteShift);
+        app.MapPut(RouteConstants.CreateShiftRoute, CreateShift);
+        app.MapPut(RouteConstants.DeleteShiftRoute, DeleteShift);
 
-        app.MapPut("shift/assign", AssignShift);
-        app.MapPut("shift/unassign", UnassignShift);
+        app.MapPut(RouteConstants.AssignShiftRoute, AssignShift);
+        app.MapPut(RouteConstants.UnassignShiftRoute, UnassignShift);
     }
     public async Task<IResult> UnassignShift(string assignmentID, HttpRequest request)
     {

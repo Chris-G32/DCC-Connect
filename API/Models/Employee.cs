@@ -4,15 +4,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API.Models;
 
-public class Employee
+public class Employee:MongoObject
 {
-    /// <summary>
-    /// Id in database, if already exists
-    /// </summary>
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    [BsonIgnoreIfNull]
-    internal ObjectId? Id { get; set; }
     /// <summary>
     /// First name of the employee
     /// </summary>
@@ -26,10 +19,5 @@ public class Employee
     /// </summary>
     [Phone]
     public string PhoneNumber { get; set; }
-    /// <summary>
-    /// Email to notify the employee
-    /// </summary>
-    [EmailAddress]
-    public string Email { get; set; }
 
 }
