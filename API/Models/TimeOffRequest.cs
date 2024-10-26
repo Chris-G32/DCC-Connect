@@ -1,6 +1,6 @@
 namespace API.Models;
 
-public class TimeOffRequest:MongoObject{
+public class TimeOffRequest:MongoObject,IRequireManagerApproval{
     /// <summary>
     /// Start time of the off request
     /// </summary>
@@ -13,9 +13,6 @@ public class TimeOffRequest:MongoObject{
     /// ID of employee requesting off.
     /// </summary>
     public string EmployeeID { get; set; }
-    /// <summary>
-    /// Status of request for time off. Null means no action taken yet
-    /// </summary>
+    /// <inheritdoc/>
     public bool? IsManagerApproved { get; set; }=null;
-
 }

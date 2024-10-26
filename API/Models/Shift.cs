@@ -1,18 +1,29 @@
-﻿using MongoDB.Bson;
+﻿using API.Models.QueryOptions;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Models;
 
-public class Shift:MongoObject
+public class Shift : MongoObject
 {
+    private const double MAX_SHIFT_LENGTH_HRS = 16;// According to derron. May need updated.
+    private TimeRange _shiftPeriod;
     /// <summary>
-    /// Start time of the shift
+    /// When the shift is taking place
     /// </summary>
-    public DateTime Start { get; set; }
-    /// <summary>
-    /// End time of the shift
-    /// </summary>
-    public DateTime End { get; set; }
+    public TimeRange ShiftPeriod
+    {
+        get { return _shiftPeriod; }
+        set
+        {
+            if (value.Duration().TotalHours > MAX_SHIFT_LENGTH_HRS)
+            {
+                throw new ArgumentException($"Shift length is too long, please be sure shifts are less than {MAX_SHIFT_LENGTH_HRS} hours");
+            }
+            _shiftPeriod = value;
+        }
+    }
+
     /// <summary>
     /// Address of the home where the shift is taking place
     /// </summary>
@@ -20,7 +31,7 @@ public class Shift:MongoObject
     /// <summary>
     /// Role of the employee working the shift
     /// </summary>
-    public string Role { get; set; }
+    public Role Role { get; set; }
     /// <summary>
     /// Employee assigned to the shift, null or empty if none.
     /// </summary>

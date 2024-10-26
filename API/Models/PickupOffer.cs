@@ -1,6 +1,6 @@
 namespace API.Models;
 
-public class PickupOffer:MongoObject{
+public class PickupOffer:MongoObject,IRequireManagerApproval{
     /// <summary>
     /// ID of shift to pickup
     /// </summary>

@@ -2,7 +2,8 @@ namespace API.Models;
 
 
 
-public class TradeOffer:MongoObject{
+public class TradeOffer : MongoObject, IRequireManagerApproval, IRequireEmployeeApproval
+{
     /// <summary>
     /// ID of coverage request the offer is for
     /// </summary>
@@ -14,9 +15,8 @@ public class TradeOffer:MongoObject{
     /// <summary>
     /// Whether the employee associated with the coverage request has approved it or not. Null means no action taken yet
     /// </summary>
-    public bool? IsRequesterApproved { get; set; }=null;
-    /// <summary>
-    /// Status of request for time off. Null means no action taken yet
-    /// </summary>
-    public bool? IsManagerApproved { get; set; }=null;
+    public bool? IsEmployeeApproved { get; set; } = null;
+    /// <inheritdoc/>
+    public bool? IsManagerApproved { get; set; } = null;
+
 }

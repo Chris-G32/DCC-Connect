@@ -9,66 +9,74 @@ namespace API.Services;
 
 public interface IShiftScheduler
 {
-    void assignShift(ShiftAssignment assignment);
-    void unassignShift(string shiftID);
-    void createShift(Shift shift);
-    void deleteShift(string shiftID);
+    void AssignShift(ShiftAssignment assignment);
+    void UnassignShift(string shiftID);
+    void CreateShift(Shift shift);
+    void DeleteShift(string shiftID);
 }
-public class ShiftScheduler(ICollectionsProvider collectionsProvider) : IShiftScheduler
+public class ShiftScheduler(ICollectionsProvider collectionsProvider, IAvailabiltyService availabiltyService, IDBTransactionService transactService) : IShiftScheduler
 {
     private readonly ICollectionsProvider _collectionsProvider = collectionsProvider;
+    private readonly IAvailabiltyService _availabiltyService = availabiltyService;
+    private readonly IDBTransactionService _transactService = transactService;
 
     /// <summary>
     /// Performs database operations to update a shift assignment. Without regard for the validity of the assignment.
     /// </summary>
     /// <param name="assignment"></param>
-    private void applyShiftAssignment(ShiftAssignment assignment)
+    private void ApplyShiftAssignment(ShiftAssignment assignment)
     {
         UpdateDefinition<Shift> update = Builders<Shift>.Update.Set(shift => shift.EmployeeID, assignment.EmployeeID);
         _collectionsProvider.Shifts.UpdateOne(shift => shift.Id.ToString() == assignment.ShiftID, update);
     }
-    public void assignShift(ShiftAssignment assignment)
+    public void AssignShift(ShiftAssignment assignment)
     {
-        // TODO: add overlapping check into here.
-        // This is jut to enforce a more readable and intentional calling of the endpoint. Nothing in this code is in conflict with an unassignment of a shift being done
-        if (string.IsNullOrEmpty(assignment.EmployeeID))
+        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, assignment.EmployeeID);
+        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, assignment.ShiftID);
+
+        if (!_availabiltyService.IsEmployeeSchedulableForShift(assignment.EmployeeID, assignment.ShiftID)) 
         {
-            throw new Exception("EmployeeID null or empty. Please call unassign shift endpoint to remove an assignment.");
+            throw new Exception("Can't assign employee to shift.");
         }
-        if (!DBEntityUtils.EntityWithIDExists(_collectionsProvider.Employees, assignment.EmployeeID))
-        {
-            throw new Exception($"Cannot Find employee with ID {assignment.EmployeeID}");
-        }
-        if (!DBEntityUtils.EntityWithIDExists(_collectionsProvider.Shifts, assignment.ShiftID))
-        {
-            throw new Exception($"Cannot Find shift with ID {assignment.ShiftID}");
-        }
-        applyShiftAssignment(assignment);
+        ApplyShiftAssignment(assignment);
+        //TODO: Notify employee
     }
-    public void createShift(Shift shift)
+    public void CreateShift(Shift shift)
     {
+        //TODO: Check the location exists.
+        if (shift.ShiftPeriod.Start.ToUniversalTime() < DateTime.Now.ToUniversalTime())
+        {
+            throw new Exception("Cannot create a new shift in the past.");
+        }
         _collectionsProvider.Shifts.InsertOne(shift);
     }
-
-    public void deleteShift(string shiftID)
+    public void DeleteShift(string shiftID)
     {
-        var shift = _collectionsProvider.Shifts.Find(shift => shift.Id.ToString() == shiftID).FirstOrDefault() ?? throw new Exception("Shift not found!");
+        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, shiftID);
         if (!string.IsNullOrEmpty(shift.EmployeeID))
         {
             throw new Exception("Please unassign a shift before deleting it.");
         }
         _collectionsProvider.Shifts.FindOneAndDelete(shift => shift.Id.ToString() == shiftID);
     }
-    public void unassignShift(string shiftID)
+    public void UnassignShift(string shiftID)
     {
-        if (!DBEntityUtils.EntityWithIDExists(_collectionsProvider.Shifts, shiftID))
+        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, shiftID);
+        if (string.IsNullOrEmpty(shift.EmployeeID))
         {
-            throw new Exception($"Cannot Find shift with ID {shiftID}");
+            return;
         }
-        applyShiftAssignment(assignment: new ShiftAssignment
+        _transactService.RunTransaction(() =>
         {
-            EmployeeID = null,
-            ShiftID = shiftID
+            var coverage = _collectionsProvider.CoverageRequests.FindOneAndDelete(coverage => coverage.ShiftID.ToString() == shiftID);
+            //Consider simply having a deny endpoint implemented somewheres
+            _collectionsProvider.TradeOffers.DeleteMany(offer => offer.CoverageRequestID.ToString() == coverage.ShiftID);
+            ApplyShiftAssignment(assignment: new ShiftAssignment
+            {
+                EmployeeID = null,
+                ShiftID = shiftID
+            });
         });
+        //TODO: Notify employee
     }
 }

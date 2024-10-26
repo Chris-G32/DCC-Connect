@@ -9,6 +9,14 @@ public enum CoverageOptions
 
 public class CoverageRequest : MongoObject
 {
+    public bool CanPickup()
+    {
+        return CoverageType == CoverageOptions.PickupOnly || CoverageType == CoverageOptions.PickupOrTrade;
+    }
+    public bool CanTrade()
+    {
+        return CoverageType == CoverageOptions.TradeOnly || CoverageType == CoverageOptions.PickupOrTrade;
+    }
     /// <summary>
     /// Start time of the off request
     /// </summary>

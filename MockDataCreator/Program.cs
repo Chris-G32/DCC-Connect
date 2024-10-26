@@ -16,14 +16,11 @@ for (int i = 0; i < 50; i++)
 {
     var firstName = faker.Name.FirstName();
     var lastName = faker.Name.LastName();
-    var email = $"{firstName.ToLower()}{lastName.ToLower()}@fakeDomain.com";
     var phoneNumber = faker.Phone.PhoneNumber("(###) ###-####");
 
     var employee = fixture.Build<Employee>()
-        .Without(e=>e.Id)
         .With(e => e.FirstName, firstName)
         .With(e => e.LastName, lastName)
-        .With(e => e.Email, email)
         .With(e => e.PhoneNumber, phoneNumber)
         .Create();
 
