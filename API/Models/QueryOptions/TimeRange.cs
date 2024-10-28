@@ -13,19 +13,5 @@ public class TimeRange
     }
 
     public DateTime Start { get; set; }
-
-    private DateTime _end;
-
-    public DateTime End
-    {
-        get { return _end; }
-        set
-        {
-            if (value < Start)
-            {
-                throw new ArgumentException("End time must be after or equal to start time");
-            }
-            _end = value;
-        }
-    }
+    public DateTime End { get; set; }
 }

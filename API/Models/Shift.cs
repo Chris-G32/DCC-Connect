@@ -16,6 +16,10 @@ public class Shift : MongoObject
         get { return _shiftPeriod; }
         set
         {
+            if (value.Duration().TotalHours < 0) {
+                throw new ArgumentException($"A shift may not start after it ends.");
+
+            }
             if (value.Duration().TotalHours > MAX_SHIFT_LENGTH_HRS)
             {
                 throw new ArgumentException($"Shift length is too long, please be sure shifts are less than {MAX_SHIFT_LENGTH_HRS} hours");
