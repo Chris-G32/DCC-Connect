@@ -1,4 +1,5 @@
-﻿using API.Services;
+﻿using API.Models.QueryOptions;
+using API.Services;
 
 namespace API.Models;
 

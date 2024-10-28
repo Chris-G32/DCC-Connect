@@ -30,7 +30,7 @@ public class ShiftSchedulingRoutes : CarterModule
     {
         try
         {
-            _shiftScheduler.unassignShift(assignmentID);
+            _shiftScheduler.UnassignShift(assignmentID);
         }
         catch (Exception e)
         {
@@ -43,7 +43,7 @@ public class ShiftSchedulingRoutes : CarterModule
     {
         try
         {
-            _shiftScheduler.deleteShift(shiftID);
+            _shiftScheduler.DeleteShift(shiftID);
         }
         catch (Exception e)
         {
@@ -56,7 +56,7 @@ public class ShiftSchedulingRoutes : CarterModule
     {
         try
         {
-            _shiftScheduler.assignShift(assignment);
+            _shiftScheduler.AssignShift(assignment);
         }
         catch (Exception e)
         {
@@ -69,7 +69,7 @@ public class ShiftSchedulingRoutes : CarterModule
     {
         try
         {
-            _shiftScheduler.createShift(shift);
+            _shiftScheduler.CreateShift(shift);
         }
         catch (Exception e)
         {

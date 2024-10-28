@@ -9,11 +9,18 @@ public class RouteConstants
     public static string AssignShiftRoute { get; } = ShiftRouteBase + "assign/";
     public static string UnassignShiftRoute { get; } = ShiftRouteBase + "unassign/";
 
-    //Employee Interaction Routes
+    //Shift Trading and Pickup Routes
     public static string EmployeeRouteBase { get; } = "employees/";
     public static string OfferUpShiftRoute { get; } = EmployeeRouteBase + "offerup/";
     public static string CancelOfferUpShiftRoute { get; } = OfferUpShiftRoute + "cancel/";
     public static string TradeShiftRoute { get; } = EmployeeRouteBase + "trade/";
     public static string PickUpShiftRoute { get; } = EmployeeRouteBase + "pickup/";
+    // Approval Routes for trading and pickup
+    public static string ApproveTradeRoute { get; } = TradeShiftRoute + "approve/";
+    public static string DenyTradeRoute { get; } = TradeShiftRoute + "deny/";
+    public static string ApprovePickupRoute { get; } = PickUpShiftRoute + "approve/";
+    public static string DenyPickupRoute { get; } = PickUpShiftRoute + "deny/";
+
+    
 
 }

@@ -5,7 +5,11 @@ using API.Utils;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
-
+using System.Threading;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
 namespace API.Services;
 
 public interface IShiftTrader
@@ -25,13 +29,53 @@ public interface IShiftTrader
     /// </summary>
     /// <param name="request"></param>
     public void PickupShift(PickupOfferWithOptions offer);
+    public void ApproveTrade(string tradeOfferID, bool isManager = false);
+    public void ApprovePickup(string tradeOfferID);
+    public void DenyTrade(string tradeOfferID, bool isManager = false);
+    public void DenyPickup(string tradeOfferID);
+
 }
-public class ShiftTrader(ICollectionsProvider collectionProvider, IShiftRetriever shiftRetriever) : IShiftTrader
+public class ShiftTrader(ILogger<ShiftTrader> logger, ICollectionsProvider collectionProvider, IShiftScheduler scheduler, IShiftRetriever shiftRetriever, IAvailabiltyService availabilityService) : IShiftTrader
 {
+    private readonly ILogger<ShiftTrader> _logger=logger;
     private readonly ICollectionsProvider _collectionsProvider = collectionProvider;
     private readonly IShiftRetriever _shiftRetriever = shiftRetriever;
+    private readonly IAvailabiltyService _availabilityService = availabilityService;
+    private readonly IShiftScheduler _scheduler = scheduler;
+
+    private void ExecuteTrade(TradeOffer tradeOffer)
+    {
+        // Unassign the shift from the coverage request 
+        var coverageRequest = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.CoverageRequests, tradeOffer.CoverageRequestID);
+        var coverageRequestShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, coverageRequest.ShiftID);
+        _scheduler.UnassignShift(coverageRequest.ShiftID);
+
+        //Unassign the shift offered for the trade
+        var offeredShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, tradeOffer.ShiftOfferedID);
+        _scheduler.UnassignShift(tradeOffer.ShiftOfferedID);
+
+        //Assign shift offered for trade to the employee requesting coverage.
+        _scheduler.AssignShift(new ShiftAssignment
+        {
+            EmployeeID = coverageRequestShift.EmployeeID,
+            ShiftID = tradeOffer.ShiftOfferedID
+        });
+        //Assign shift requesting coverage to employee offering trade.
+        _scheduler.AssignShift(new ShiftAssignment
+        {
+            EmployeeID = offeredShift.EmployeeID,
+            ShiftID = coverageRequest.ShiftID
+        });
+        _logger.LogInformation("Trade executed.");
+    }
     public void RequestCoverage(CoverageRequest request)
     {
+        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, request.ShiftID);
+        if (shift.ShiftPeriod.Start < DateTime.Now)
+        {
+            throw new Exception("Shift already started. Cannot request coverage.");
+        }
+        // Authenticate employee
         _collectionsProvider.CoverageRequests.InsertOne(request);
     }
     /// <summary>
@@ -42,49 +86,110 @@ public class ShiftTrader(ICollectionsProvider collectionProvider, IShiftRetrieve
     public void OfferTrade(TradeOffer offer)
     {
         // Assert shift offered exists.
-        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, offer.ShiftOfferedID);
-
-        var coverage = _collectionsProvider.CoverageRequests.
-            Find(coverage => coverage.Id.ToString() == offer.CoverageRequestID).FirstOrDefault()
-            ?? throw new Exception(ErrorUtils.FormatObjectDoesNotExistErrorString(offer.CoverageRequestID, CollectionConstants.CoverageRequestsCollection));
-
-        switch (coverage.CoverageType)
+        var offeredShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, offer.ShiftOfferedID);
+        var coverageReq = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.CoverageRequests, offer.CoverageRequestID);
+        if (offeredShift.ShiftPeriod.Start < DateTime.Now)
         {
-            case CoverageOptions.TradeOnly:
-            case CoverageOptions.PickupOrTrade:
-                _collectionsProvider.TradeOffers.InsertOne(offer);
-                break;
-            default:
-                throw new Exception("Cannot offer a trade for a shift that is only up for trade.");
+            throw new Exception("Cannot offer a trade for a shift that has already started.");
         }
+        if (coverageReq.CanTrade())
+        {
+            _collectionsProvider.TradeOffers.InsertOne(offer);
+            //TODO: Notify employee
+            return;
+        }
+        throw new Exception("Cannot offer a trade for a shift that is only up for trade.");
     }
 
-    public void PickupShift(PickupOfferWithOptions offer)
+    public void PickupShift(PickupOfferWithOptions offer) //Logic breakdown. Validate that the pertinent ID's exist. Then validate shift is actually open.
     {
         DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, offer.EmployeeID);
-        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, offer.OpenShiftID);
-
-        //Note: Potential performance boost here would be to filter out by the date of the shift being requested to be picked up.
-        // Verify shift is open for pickup
-        if (!_shiftRetriever.GetOpenShiftIDs(offer.Options).Any(id => id == offer.OpenShiftID))
+        var openShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, offer.OpenShiftID);
+        if (!_availabilityService.IsEmployeeSchedulableForShift(offer.EmployeeID, offer.OpenShiftID))
         {
-            throw new Exception("Cannot pick up a shift that is not open.");
+            throw new Exception("Shift cannot be picked up.");
         }
-        var openShift = _collectionsProvider.Shifts.Find(shift => shift.Id.ToString() == offer.OpenShiftID).FirstOrDefault(); // Assert shift exists (should never be null because of the above check
+
         // Verify employee has not already requested to pick up the shift
         if (_collectionsProvider.PickupOffers.CountDocuments(existingOffer => existingOffer.OpenShiftID == offer.OpenShiftID && existingOffer.EmployeeID == offer.EmployeeID) > 0)
         {
             throw new Exception("Duplicate pickup request.");
         }
-        // Verify employee is not scheduled for another shift at that time
-        // Note this may be a good candidate to create a helper function or service
-        if (_collectionsProvider.Shifts.CountDocuments(shift =>
-            shift.EmployeeID == offer.EmployeeID &&
-            shift.Start < openShift.End &&    // Shift starts before openShift ends
-            shift.End > openShift.Start) > 0)  // Shift ends after openShift starts
-        {
-            throw new Exception("Cannot pick up a shift that overlaps with another shift.");
-        }
         _collectionsProvider.PickupOffers.InsertOne(offer);
+    }
+
+    public void ApproveTrade(string tradeOfferID, bool isManager = false)
+    {
+        UpdateDefinition<TradeOffer> update = isManager ?
+            Builders<TradeOffer>.Update.Set(trade => trade.IsManagerApproved, true) :
+            Builders<TradeOffer>.Update.Set(trade => trade.IsEmployeeApproved, true);
+
+        var result = _collectionsProvider.TradeOffers.FindOneAndUpdate(offer => offer.Id.ToString() == tradeOfferID, update, new() { ReturnDocument = ReturnDocument.After });
+
+        if (result == null)
+        {
+            throw new Exception(ErrorUtils.FormatObjectDoesNotExistErrorString(tradeOfferID, _collectionsProvider.TradeOffers.CollectionNamespace.CollectionName));
+        }
+
+        if (result.IsManagerApproved == true && result.IsEmployeeApproved == true)
+        {
+            ExecuteTrade(result);
+            // Notify employees
+        }
+        else if (result.IsManagerApproved == true)
+        {
+            // Notify employees
+        }
+        else if (result.IsEmployeeApproved == true)
+        {
+            // Notify manager
+        }
+
+    }
+    public void DenyTrade(string tradeOfferID, bool isManager = false)
+    {
+        var result = _collectionsProvider.TradeOffers.FindOneAndDelete(offer => offer.Id.ToString() == tradeOfferID);
+        if (result == null)
+        {
+            throw new Exception(ErrorUtils.FormatObjectDoesNotExistErrorString(tradeOfferID, _collectionsProvider.TradeOffers.CollectionNamespace.CollectionName));
+        }
+        if (isManager == true)
+        {
+            // Notify employees
+        }
+        else
+        {
+            // Notify person that offered trade
+        }
+
+    }
+    private PickupOffer ActOnPickup(string pickupOfferId, bool isApproved)
+    {
+        var pickup = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.PickupOffers, pickupOfferId);
+        if (pickup.IsManagerApproved != null)
+        {
+            throw new Exception("Pickup has already been acted on. Please submit a new request.");
+        }
+        var update = Builders<PickupOffer>.Update.Set(trade => trade.IsManagerApproved, isApproved);
+        pickup = _collectionsProvider.PickupOffers.FindOneAndUpdate(pickup => pickup.Id.ToString() == pickupOfferId, update);
+        if (pickup == null)
+        {
+            throw new Exception(ErrorUtils.FormatObjectDoesNotExistErrorString(pickupOfferId, _collectionsProvider.PickupOffers.CollectionNamespace.CollectionName));
+        }
+        return pickup;
+
+    }
+    public void ApprovePickup(string pickupOfferId)
+    {
+        var pickupOffer=ActOnPickup(pickupOfferId, true);
+        _scheduler.AssignShift(new ShiftAssignment
+        {
+            EmployeeID = pickupOffer.EmployeeID,
+            ShiftID = pickupOffer.OpenShiftID
+        });
+    }
+    public void DenyPickup(string pickupOfferId)
+    {
+        ActOnPickup(pickupOfferId, false);
     }
 }

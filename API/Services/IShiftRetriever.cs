@@ -1,26 +1,9 @@
 ﻿using API.Models;
+using API.Models.QueryOptions;
 using MongoDB.Driver;
 
 namespace API.Services;
-public interface TimeRangeFilter
-{
-    DateTime start { get; set; }
-    DateTime end { get; set; }
-}
-public interface OpenShiftQueryOptions
-{
-    /// <summary>
-    /// Only get shifts that start within this range
-    /// </summary>
-    TimeRangeFilter? TimeFilter { get; set; }
-}
-public interface ShiftQueryOptions:OpenShiftQueryOptions
-{
-    /// <summary>
-    /// Only get shifts assigned to this employee
-    /// </summary>
-    string? EmployeeIDFilter { get; set; }
-}
+
 public interface IShiftRetriever
 {
     List<Shift> GetShifts(ShiftQueryOptions options);
@@ -34,7 +17,7 @@ public class ShiftRetriever(ICollectionsProvider provider) : IShiftRetriever
         FilterDefinition<Shift> filter = builder.Empty;
         if (options.TimeFilter != null)
         {
-            filter = filter & builder.Lt(shift => shift.Start, options.TimeFilter.start);
+            filter = filter & builder.Lt(shift => shift.ShiftPeriod.Start, options.TimeFilter.Start);
         }
         return filter;
 
