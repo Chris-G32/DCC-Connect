@@ -14,11 +14,10 @@ public interface IShiftScheduler
     void CreateShift(Shift shift);
     void DeleteShift(string shiftID);
 }
-public class ShiftScheduler(ICollectionsProvider collectionsProvider, IAvailabiltyService availabiltyService, IDBTransactionService transactService) : IShiftScheduler
+public class ShiftScheduler(ICollectionsProvider collectionsProvider, IAvailabiltyService availabiltyService) : IShiftScheduler
 {
     private readonly ICollectionsProvider _collectionsProvider = collectionsProvider;
     private readonly IAvailabiltyService _availabiltyService = availabiltyService;
-    private readonly IDBTransactionService _transactService = transactService;
 
     /// <summary>
     /// Performs database operations to update a shift assignment. Without regard for the validity of the assignment.
@@ -34,7 +33,7 @@ public class ShiftScheduler(ICollectionsProvider collectionsProvider, IAvailabil
         DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, assignment.EmployeeID);
         DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, assignment.ShiftID);
 
-        if (!_availabiltyService.IsEmployeeSchedulableForShift(assignment.EmployeeID, assignment.ShiftID)) 
+        if (!_availabiltyService.IsEmployeeSchedulableForShift(assignment.EmployeeID, assignment.ShiftID))
         {
             throw new Exception("Can't assign employee to shift.");
         }
@@ -66,17 +65,19 @@ public class ShiftScheduler(ICollectionsProvider collectionsProvider, IAvailabil
         {
             return;
         }
-        _transactService.RunTransaction(() =>
+
+        var coverage = _collectionsProvider.CoverageRequests.FindOneAndDelete(coverage => coverage.ShiftID.ToString() == shiftID);
+        if (coverage != null)
         {
-            var coverage = _collectionsProvider.CoverageRequests.FindOneAndDelete(coverage => coverage.ShiftID.ToString() == shiftID);
-            //Consider simply having a deny endpoint implemented somewheres
             _collectionsProvider.TradeOffers.DeleteMany(offer => offer.CoverageRequestID.ToString() == coverage.ShiftID);
-            ApplyShiftAssignment(assignment: new ShiftAssignment
-            {
-                EmployeeID = null,
-                ShiftID = shiftID
-            });
+        }
+
+        ApplyShiftAssignment(assignment: new ShiftAssignment
+        {
+            EmployeeID = null,
+            ShiftID = shiftID
         });
+
         //TODO: Notify employee
     }
 }
