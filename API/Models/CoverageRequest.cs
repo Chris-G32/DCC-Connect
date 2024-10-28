@@ -2,9 +2,9 @@ namespace API.Models;
 
 public enum CoverageOptions
 {
-    PickupOnly,
-    TradeOnly,
-    PickupOrTrade
+    PickupOnly = 0,
+    TradeOnly = 1,
+    PickupOrTrade = 2
 }
 
 public class CoverageRequest : MongoObject
@@ -21,8 +21,9 @@ public class CoverageRequest : MongoObject
     /// Start time of the off request
     /// </summary>
     public string ShiftID { get; set; }
+
     /// <summary>
-    /// Type of coverage wanted.
+    /// Type of coverage wanted. 0 Pickup Only, 1 Trade only, 2 either
     /// </summary>
     public CoverageOptions CoverageType { get; set; }
     /// <summary>
