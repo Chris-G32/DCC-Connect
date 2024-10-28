@@ -21,9 +21,8 @@ public class CoverageRequest : MongoObject
     /// Start time of the off request
     /// </summary>
     public string ShiftID { get; set; }
-
     /// <summary>
-    /// Type of coverage wanted. 0 Pickup Only, 1 Trade only, 2 either
+    /// Type of coverage wanted.
     /// </summary>
     public CoverageOptions CoverageType { get; set; }
     /// <summary>
