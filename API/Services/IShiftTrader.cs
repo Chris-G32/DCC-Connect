@@ -9,6 +9,7 @@ using System.Threading;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
 namespace API.Services;
 
 public interface IShiftTrader
@@ -34,48 +35,23 @@ public interface IShiftTrader
     public void DenyPickup(string tradeOfferID);
 
 }
-public class ShiftTrader : IShiftTrader
+public class ShiftTrader(ILogger<ShiftTrader> logger, ICollectionsProvider collectionProvider, IShiftScheduler scheduler, IShiftRetriever shiftRetriever, IAvailabiltyService availabilityService) : IShiftTrader
 {
-    private readonly ICollectionsProvider _collectionsProvider;
-    private readonly IShiftRetriever _shiftRetriever;
-    private readonly IAvailabiltyService _availabilityService;
-    private readonly IShiftScheduler _scheduler;
-    private readonly IDBTransactionService _transactionService;
-    public ShiftTrader(ICollectionsProvider collectionProvider, IDBTransactionService transactionService, IShiftScheduler scheduler, IShiftRetriever shiftRetriever, IAvailabiltyService availabilityService)
-    {
-        _collectionsProvider = collectionProvider;
-        _shiftRetriever = shiftRetriever;
-        _availabilityService = availabilityService;
-        _scheduler = scheduler;
-        _transactionService = transactionService;
+    private readonly ILogger<ShiftTrader> _logger=logger;
+    private readonly ICollectionsProvider _collectionsProvider = collectionProvider;
+    private readonly IShiftRetriever _shiftRetriever = shiftRetriever;
+    private readonly IAvailabiltyService _availabilityService = availabilityService;
+    private readonly IShiftScheduler _scheduler = scheduler;
 
-        //Add triggers to db
-        _ = RegisterUpdateCallbacks();
-    }
-    private async Task RegisterUpdateCallbacks()
-    {
-        using var cursor = await _collectionsProvider.TradeOffers.WatchAsync();
-
-        while (await cursor.MoveNextAsync())
-        {
-            foreach (var change in cursor.Current)
-            {
-                if (change.OperationType == ChangeStreamOperationType.Update)
-                {
-                    TradeRequestUpdateCallback(change);
-                }
-            }
-        }
-    }
     private void ExecuteTrade(TradeOffer tradeOffer)
     {
         // Unassign the shift from the coverage request 
-        var coverageRequest =DBEntityUtils.ThrowIfNotExists(_collectionsProvider.CoverageRequests, tradeOffer.CoverageRequestID);
+        var coverageRequest = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.CoverageRequests, tradeOffer.CoverageRequestID);
         var coverageRequestShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, coverageRequest.ShiftID);
         _scheduler.UnassignShift(coverageRequest.ShiftID);
 
         //Unassign the shift offered for the trade
-        var offeredShift=DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, tradeOffer.ShiftOfferedID);
+        var offeredShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, tradeOffer.ShiftOfferedID);
         _scheduler.UnassignShift(tradeOffer.ShiftOfferedID);
 
         //Assign shift offered for trade to the employee requesting coverage.
@@ -90,22 +66,7 @@ public class ShiftTrader : IShiftTrader
             EmployeeID = offeredShift.EmployeeID,
             ShiftID = coverageRequest.ShiftID
         });
-    }
-    private void TradeRequestUpdateCallback(ChangeStreamDocument<TradeOffer> update)
-    {
-        var tradeOffer = update.FullDocument;
-        if (tradeOffer.IsManagerApproved == true && tradeOffer.IsEmployeeApproved == true)
-        {
-            _transactionService.RunTransaction(() => ExecuteTrade(tradeOffer));
-        }
-        if (tradeOffer.IsManagerApproved == false)
-        {
-            //Notify employees of trade offer denial
-        }
-        else if (tradeOffer.IsEmployeeApproved == false)
-        {
-            //Notify employee offering trade that it was denied.
-        }
+        _logger.LogInformation("Trade executed.");
     }
     public void RequestCoverage(CoverageRequest request)
     {
@@ -159,30 +120,76 @@ public class ShiftTrader : IShiftTrader
 
     public void ApproveTrade(string tradeOfferID, bool isManager = false)
     {
-        UpdateDefinition<TradeOffer> update = isManager ? 
-            Builders<TradeOffer>.Update.Set(trade => trade.IsManagerApproved, true) : 
+        UpdateDefinition<TradeOffer> update = isManager ?
+            Builders<TradeOffer>.Update.Set(trade => trade.IsManagerApproved, true) :
             Builders<TradeOffer>.Update.Set(trade => trade.IsEmployeeApproved, true);
 
-        var result = _collectionsProvider.TradeOffers.UpdateOne(offer => offer.Id.ToString() == tradeOfferID, update);
+        var result = _collectionsProvider.TradeOffers.FindOneAndUpdate(offer => offer.Id.ToString() == tradeOfferID, update, new() { ReturnDocument = ReturnDocument.After });
 
-        if (result.ModifiedCount == 0)
+        if (result == null)
         {
             throw new Exception(ErrorUtils.FormatObjectDoesNotExistErrorString(tradeOfferID, _collectionsProvider.TradeOffers.CollectionNamespace.CollectionName));
         }
-    }
 
-    public void ApprovePickup(string tradeOfferID)
-    {
-        throw new NotImplementedException();
-    }
+        if (result.IsManagerApproved == true && result.IsEmployeeApproved == true)
+        {
+            ExecuteTrade(result);
+            // Notify employees
+        }
+        else if (result.IsManagerApproved == true)
+        {
+            // Notify employees
+        }
+        else if (result.IsEmployeeApproved == true)
+        {
+            // Notify manager
+        }
 
+    }
     public void DenyTrade(string tradeOfferID, bool isManager = false)
     {
-        throw new NotImplementedException();
-    }
+        var result = _collectionsProvider.TradeOffers.FindOneAndDelete(offer => offer.Id.ToString() == tradeOfferID);
+        if (result == null)
+        {
+            throw new Exception(ErrorUtils.FormatObjectDoesNotExistErrorString(tradeOfferID, _collectionsProvider.TradeOffers.CollectionNamespace.CollectionName));
+        }
+        if (isManager == true)
+        {
+            // Notify employees
+        }
+        else
+        {
+            // Notify person that offered trade
+        }
 
-    public void DenyPickup(string tradeOfferID)
+    }
+    private PickupOffer ActOnPickup(string pickupOfferId, bool isApproved)
     {
-        throw new NotImplementedException();
+        var pickup = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.PickupOffers, pickupOfferId);
+        if (pickup.IsManagerApproved != null)
+        {
+            throw new Exception("Pickup has already been acted on. Please submit a new request.");
+        }
+        var update = Builders<PickupOffer>.Update.Set(trade => trade.IsManagerApproved, isApproved);
+        pickup = _collectionsProvider.PickupOffers.FindOneAndUpdate(pickup => pickup.Id.ToString() == pickupOfferId, update);
+        if (pickup == null)
+        {
+            throw new Exception(ErrorUtils.FormatObjectDoesNotExistErrorString(pickupOfferId, _collectionsProvider.PickupOffers.CollectionNamespace.CollectionName));
+        }
+        return pickup;
+
+    }
+    public void ApprovePickup(string pickupOfferId)
+    {
+        var pickupOffer=ActOnPickup(pickupOfferId, true);
+        _scheduler.AssignShift(new ShiftAssignment
+        {
+            EmployeeID = pickupOffer.EmployeeID,
+            ShiftID = pickupOffer.OpenShiftID
+        });
+    }
+    public void DenyPickup(string pickupOfferId)
+    {
+        ActOnPickup(pickupOfferId, false);
     }
 }
