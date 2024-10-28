@@ -1,6 +1,7 @@
 namespace API.Models;
 
-public class PickupOffer:MongoObject,IRequireManagerApproval{
+public class PickupOffer : MongoObject, IRequireManagerApproval
+{
     /// <summary>
     /// ID of shift to pickup
     /// </summary>
@@ -12,5 +13,5 @@ public class PickupOffer:MongoObject,IRequireManagerApproval{
     /// <summary>
     /// Status of request for time off. Null means no action taken yet
     /// </summary>
-    public bool? IsManagerApproved { get; set; }=null;
+    public bool? IsManagerApproved { get; set; } = null;
 }
