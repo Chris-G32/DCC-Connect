@@ -9,7 +9,7 @@ public interface IMongoDBSettingsProvider
 }
 public class MongoDBSettingsProvider(IConfiguration config) : IMongoDBSettingsProvider
 {
-    private readonly MongoDBSettings _settings  = config.GetRequiredSection(DatabaseConstants.DatabaseSettingsSection).Get<MongoDBSettings>() ?? throw new Exception("MongoDB settings not found in appsettings.json");
+    private readonly MongoDBSettings _settings = config.GetRequiredSection(DatabaseConstants.DatabaseSettingsSection).Get<MongoDBSettings>() ?? throw new Exception("MongoDB settings not found in appsettings.json");
 
     public MongoDBSettings GetSettings()
     {

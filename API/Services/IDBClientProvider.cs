@@ -14,9 +14,9 @@ public class MongoClientProvider : IDBClientProvider
     private readonly MongoDBSettings _settings;
     private readonly IMongoClient _client;
 
-    public MongoClientProvider(IConfiguration config)
+    public MongoClientProvider(IMongoDBSettingsProvider settingsProvider)
     {
-        _settings = config.GetRequiredSection(DatabaseConstants.DatabaseSettingsSection).Get<MongoDBSettings>() ?? throw new Exception("MongoDB settings not found in appsettings.json");
+        _settings = settingsProvider.GetSettings();
         _client = new MongoClient(_settings.GetClientSettings());
     }
     public IMongoClient Client => _client;
