@@ -1,5 +1,6 @@
 ﻿using API.Models;
 using API.Models.QueryOptions;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace API.Services;
@@ -7,7 +8,7 @@ namespace API.Services;
 public interface IShiftRetriever
 {
     List<Shift> GetShifts(ShiftQueryOptions options);
-    List<string> GetOpenShiftIDs(OpenShiftQueryOptions options);
+    List<ObjectId> GetOpenShiftIDs(OpenShiftQueryOptions options);
 }
 public class ShiftRetriever(ICollectionsProvider provider) : IShiftRetriever
 {
@@ -33,7 +34,7 @@ public class ShiftRetriever(ICollectionsProvider provider) : IShiftRetriever
         return filter;
 
     }
-    public List<string> GetOpenShiftIDs(OpenShiftQueryOptions options)
+    public List<ObjectId> GetOpenShiftIDs(OpenShiftQueryOptions options)
     {
 
         var openToPickupShiftIDs = _collectionsProvider.CoverageRequests.Find(
@@ -41,8 +42,8 @@ public class ShiftRetriever(ICollectionsProvider provider) : IShiftRetriever
 
         var builder = Builders<Shift>.Filter;
         var filter = options == null ? builder.Empty : BuildFilter(options, builder);
-        filter = filter & builder.Where(shift => string.IsNullOrEmpty(shift.EmployeeID));
-        var unassignedShifts = _collectionsProvider.Shifts.Find(filter).ToList().Select(shift => shift.Id.ToString() ?? throw new Exception("ID should never be null when reading from database."));
+        filter = filter & builder.Where(shift => shift.EmployeeID==null);
+        var unassignedShifts = _collectionsProvider.Shifts.Find(filter).ToList().Select(shift => shift.Id ?? throw new Exception("ID should never be null when reading from database."));
         var openShiftIds = openToPickupShiftIDs.Union(unassignedShifts);
 
         return openShiftIds.ToList();

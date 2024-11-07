@@ -2,6 +2,7 @@
 using API.Models.QueryOptions;
 using API.Utils;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace API.Services;
@@ -17,31 +18,49 @@ public interface IAvailabiltyService
     /// <param name="employeeID">ID of the employee to get availability for</param>
     /// <param name="timeRange">Range to check availability</param>
     /// <returns>True if the employee is available for the entire range, false otherwise</returns>
-    bool IsEmployeeAvailable(string employeeID, TimeRange timeRange);
-    bool IsShiftOpen(string shiftID, out Shift shift);
-    bool IsEmployeeSchedulableForShift(string employeeID, string shiftID);
+    bool IsEmployeeAvailable(ObjectId? employeeID, TimeRange timeRange);
+    bool IsShiftOpen(ObjectId? shiftID, out Shift? shift);
+    bool IsEmployeeSchedulableForShift(ObjectId? employeeID, ObjectId shiftID);
 }
-public class AvailablityService(ICollectionsProvider cp) : IAvailabiltyService
+public class AvailablityService(IEntityRetriever entityRetriever) : IAvailabiltyService
 {
-    private readonly ICollectionsProvider _collectionsProvider = cp;
+    private readonly IEntityRetriever _entityRetriever = entityRetriever;
+    private readonly ICollectionsProvider _collectionsProvider = entityRetriever.CollectionsProvider;
     /// <summary>
-    /// Checks if a given employee is free to work a given shift.
+    /// Checks if a given employee is free to work a given shift. Returns false when employee or shift does not exist.
     /// </summary>
     /// <param name="employeeID"></param>
     /// <param name="shiftID"></param>
-    /// <returns></returns>
-    public bool IsEmployeeSchedulableForShift(string employeeID, string shiftID)
+    /// <returns> True if an employee os available and a shift is open for scheduling. False when an ID is not found or an employee is not available.</returns>
+    public bool IsEmployeeSchedulableForShift(ObjectId? employeeID, ObjectId shiftID)
     {
-        var shift = new Shift();
-        var isOpen = IsShiftOpen(shiftID, out shift);
+        if (employeeID == null)
+        {
+            return false;
+        }
+
+        var isOpen = IsShiftOpen(shiftID, out Shift? shift);
+        if (shift == null)
+        {
+            return false;
+        }
         var isEmployeeAvailable = IsEmployeeAvailable(employeeID, shift.ShiftPeriod);
         // TODO: Add check for time off
         return isOpen & isEmployeeAvailable;
     }
 
-    public bool IsEmployeeAvailable(string employeeID, TimeRange timeRange)
+    public bool IsEmployeeAvailable(ObjectId? employeeID, TimeRange timeRange)
     {
-        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, employeeID);
+        if (employeeID == null)
+        {
+            return false;
+        }
+
+        if (!_entityRetriever.DoesEntityExist(_collectionsProvider.Employees, employeeID))
+        {
+            return false;
+        }
+
         var builder = Builders<Shift>.Filter;
         var filter = builder.Eq(shift => shift.EmployeeID, employeeID) &
              builder.Lte(shift => shift.ShiftPeriod.Start, timeRange.End) &
@@ -54,12 +73,15 @@ public class AvailablityService(ICollectionsProvider cp) : IAvailabiltyService
     /// <param name="shiftID"></param>
     /// <param name="shift"></param>
     /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public bool IsShiftOpen(string shiftID, out Shift shift)
+    public bool IsShiftOpen(ObjectId? shiftID, out Shift? shift)
     {
-        shift= DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, shiftID);
-        
-        if (string.IsNullOrEmpty(shift.EmployeeID))
+        shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
+        if (shift == null)
+        {
+            return false;
+        }
+
+        if (shift.EmployeeID == null)
         {
             return true;
         }
@@ -67,7 +89,7 @@ public class AvailablityService(ICollectionsProvider cp) : IAvailabiltyService
         {
             return false;
         }
-        var coverageRequest = _collectionsProvider.CoverageRequests.Find(coverage => coverage.ShiftID.ToString() == shiftID).FirstOrDefault();
+        var coverageRequest = _collectionsProvider.CoverageRequests.Find(coverage => coverage.ShiftID == shiftID).FirstOrDefault();
         if (coverageRequest == null)
         {
             return false;

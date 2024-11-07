@@ -1,7 +1,9 @@
-﻿namespace API.Models;
+﻿using MongoDB.Bson;
+
+namespace API.Models;
 
 public class ShiftAssignment
 {
-    public required string ShiftID { get; set; }
-    public string? EmployeeID { get; set; }
+    public required ObjectId ShiftID { get; set; }
+    public ObjectId? EmployeeID { get; set; }
 }

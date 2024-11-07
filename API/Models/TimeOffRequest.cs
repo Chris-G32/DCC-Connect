@@ -1,3 +1,7 @@
+using API.Constants;
+using Microsoft.CodeAnalysis;
+using MongoDB.Bson;
+
 namespace API.Models;
 
 public class TimeOffRequest:MongoObject,IRequireManagerApproval{
@@ -12,7 +16,8 @@ public class TimeOffRequest:MongoObject,IRequireManagerApproval{
     /// <summary>
     /// ID of employee requesting off.
     /// </summary>
-    public string EmployeeID { get; set; }
+    public ObjectId EmployeeID { get; set; }
     /// <inheritdoc/>
     public bool? IsManagerApproved { get; set; }=null;
+    
 }

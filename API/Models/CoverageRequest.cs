@@ -1,3 +1,6 @@
+using MongoDB.Bson;
+using System.ComponentModel.DataAnnotations;
+
 namespace API.Models;
 
 public enum CoverageOptions
@@ -20,7 +23,7 @@ public class CoverageRequest : MongoObject
     /// <summary>
     /// Start time of the off request
     /// </summary>
-    public string ShiftID { get; set; }
+    public ObjectId ShiftID { get; set; }
     /// <summary>
     /// Type of coverage wanted.
     /// </summary>
@@ -28,5 +31,8 @@ public class CoverageRequest : MongoObject
     /// <summary>
     /// Optional note to leave with coverage request.
     /// </summary>
+    [Length(0,300)]
     public string? Note { get; set; }
+    
+
 }

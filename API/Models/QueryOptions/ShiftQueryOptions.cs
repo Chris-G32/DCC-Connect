@@ -1,4 +1,6 @@
-﻿namespace API.Models.QueryOptions;
+﻿using MongoDB.Bson;
+
+namespace API.Models.QueryOptions;
 
 
 public interface OpenShiftQueryOptions
@@ -13,5 +15,5 @@ public interface ShiftQueryOptions : OpenShiftQueryOptions
     /// <summary>
     /// Only get shifts assigned to this employee
     /// </summary>
-    string? EmployeeIDFilter { get; set; }
+    ObjectId? EmployeeIDFilter { get; set; }
 }

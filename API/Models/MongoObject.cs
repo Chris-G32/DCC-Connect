@@ -4,7 +4,7 @@ using MongoDB.Bson;
 namespace API.Models;
 
 // Note: This object id thingy may cause problems in swagger, not sure yet could need to copy and paste this code to classes if so
-public class MongoObject
+public abstract class MongoObject
 {
     /// <summary>
     /// Id in database, if already exists

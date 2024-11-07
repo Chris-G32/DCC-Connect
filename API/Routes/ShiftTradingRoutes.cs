@@ -12,9 +12,11 @@ namespace API.Routes;
 public class ShiftTradingRoutes : CarterModule
 {
     private readonly IShiftTrader _trader;
-    public ShiftTradingRoutes(IShiftTrader trader) : base()
+    private readonly ILogger<ShiftTradingRoutes> _logger;
+    public ShiftTradingRoutes(IShiftTrader trader,ILogger<ShiftTradingRoutes> logger) : base()
     {
         _trader = trader;
+        _logger = logger;
     }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -31,7 +33,6 @@ public class ShiftTradingRoutes : CarterModule
     }
     public async Task<IResult> ApproveTrade(string tradeOfferId, HttpRequest request)
     {
-            
         try
         {
             _trader.ApproveTrade(tradeOfferId,!string.IsNullOrEmpty(request.Headers.Authorization));
