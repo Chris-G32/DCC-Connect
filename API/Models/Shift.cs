@@ -6,6 +6,7 @@ namespace API.Models;
 
 public class Shift : MongoObject
 {
+
     private const double MAX_SHIFT_LENGTH_HRS = 16;// According to derron. May need updated.
     private TimeRange _shiftPeriod;
     /// <summary>
