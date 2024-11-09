@@ -12,5 +12,5 @@ public abstract class MongoObject
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     [BsonIgnoreIfNull]
-    internal ObjectId? Id { get; set; }
+    public ObjectId? Id { get; set; }
 }

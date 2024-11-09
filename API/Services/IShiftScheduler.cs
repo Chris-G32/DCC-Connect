@@ -63,7 +63,7 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
     }
     public void DeleteShift(ObjectId shiftID)
     {
-        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, shiftID.ToString());
+        var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
         if (shift.EmployeeID != null)
         {
             throw new Exception("Please unassign a shift before deleting it.");
@@ -72,9 +72,9 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
     }
     public void UnassignShift(ObjectId shiftID)
     {
-        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, shiftID.ToString());
+        var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
         if (shift.EmployeeID==null)
-        {
+        {   
             return;
         }
 
