@@ -1,4 +1,6 @@
 ﻿using API.Constants;
+using API.Constants.Errors;
+using API.Errors;
 using API.Models;
 using API.Utils;
 using MongoDB.Bson;
@@ -10,34 +12,46 @@ namespace API.Services;
 public interface IShiftScheduler
 {
     void AssignShift(ShiftAssignment assignment);
-    void UnassignShift(string shiftID);
+    void UnassignShift(ObjectId shiftID);
     void CreateShift(Shift shift);
-    void DeleteShift(string shiftID);
+    void DeleteShift(ObjectId shiftID);
 }
-public class ShiftScheduler(ICollectionsProvider collectionsProvider, IAvailabiltyService availabiltyService) : IShiftScheduler
+public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever entityRetriever, IAvailabiltyService availabiltyService) : IShiftScheduler
 {
-    private readonly ICollectionsProvider _collectionsProvider = collectionsProvider;
+    private readonly IEntityRetriever _entityRetriever = entityRetriever;
+    private readonly ICollectionsProvider _collectionsProvider = entityRetriever.CollectionsProvider;
     private readonly IAvailabiltyService _availabiltyService = availabiltyService;
+    private readonly ILogger<ShiftScheduler> _logger = logger;
 
     /// <summary>
-    /// Performs database operations to update a shift assignment. Without regard for the validity of the assignment.
+    /// Assigns an employee to a shift in the database
     /// </summary>
-    /// <param name="assignment"></param>
-    private void ApplyShiftAssignment(ShiftAssignment assignment)
+    /// <param name="assignment">The assignment to execute</param>
+    /// <returns>True on successful assignment, false otherwise</returns>
+    private bool ApplyShiftAssignment(ShiftAssignment assignment)
     {
         UpdateDefinition<Shift> update = Builders<Shift>.Update.Set(shift => shift.EmployeeID, assignment.EmployeeID);
-        _collectionsProvider.Shifts.UpdateOne(shift => shift.Id.ToString() == assignment.ShiftID, update);
+        var result=_collectionsProvider.Shifts.UpdateOne(shift => shift.Id == assignment.ShiftID, update);
+        if (result.ModifiedCount > 1)
+        {
+            _logger.LogCritical("Multiple shifts were modified by a single assignment.");
+        }
+        return result.ModifiedCount > 0;
     }
     public void AssignShift(ShiftAssignment assignment)
     {
-        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, assignment.EmployeeID);
-        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, assignment.ShiftID);
+        //DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, assignment.EmployeeID);
+        //DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, assignment.ShiftID);
 
         if (!_availabiltyService.IsEmployeeSchedulableForShift(assignment.EmployeeID, assignment.ShiftID))
         {
-            throw new Exception("Can't assign employee to shift.");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.EmployeeNotSchedulableError);
         }
-        ApplyShiftAssignment(assignment);
+        if (!ApplyShiftAssignment(assignment))
+        {
+            _logger.LogInformation($"Failed to assign ");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
+        }
         //TODO: Notify employee
     }
     public void CreateShift(Shift shift)
@@ -45,38 +59,41 @@ public class ShiftScheduler(ICollectionsProvider collectionsProvider, IAvailabil
         //TODO: Check the location exists.
         if (shift.ShiftPeriod.Start.ToUniversalTime() < DateTime.Now.ToUniversalTime())
         {
-            throw new Exception("Cannot create a new shift in the past.");
+            throw new Exception("");
         }
         _collectionsProvider.Shifts.InsertOne(shift);
     }
-    public void DeleteShift(string shiftID)
+    public void DeleteShift(ObjectId shiftID)
     {
-        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, shiftID);
-        if (!string.IsNullOrEmpty(shift.EmployeeID))
+        var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
+        if (shift.EmployeeID != null)
         {
-            throw new Exception("Please unassign a shift before deleting it.");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.CannotCreateShiftInThePastError);
         }
-        _collectionsProvider.Shifts.FindOneAndDelete(shift => shift.Id.ToString() == shiftID);
+        _collectionsProvider.Shifts.FindOneAndDelete(shift => shift.Id == shiftID);
     }
-    public void UnassignShift(string shiftID)
+    public void UnassignShift(ObjectId shiftID)
     {
-        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, shiftID);
-        if (string.IsNullOrEmpty(shift.EmployeeID))
-        {
+        var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
+        if (shift.EmployeeID==null)
+        {   
             return;
         }
 
-        var coverage = _collectionsProvider.CoverageRequests.FindOneAndDelete(coverage => coverage.ShiftID.ToString() == shiftID);
+        var coverage = _collectionsProvider.CoverageRequests.FindOneAndDelete(coverage => coverage.ShiftID == shiftID);
         if (coverage != null)
         {
-            _collectionsProvider.TradeOffers.DeleteMany(offer => offer.CoverageRequestID.ToString() == coverage.ShiftID);
+            _collectionsProvider.TradeOffers.DeleteMany(offer => offer.CoverageRequestID == coverage.ShiftID);
         }
 
-        ApplyShiftAssignment(assignment: new ShiftAssignment
+        if(!ApplyShiftAssignment(assignment: new ShiftAssignment
         {
             EmployeeID = null,
             ShiftID = shiftID
-        });
+        }))
+        {
+            throw new DCCApiException(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
+        }
 
         //TODO: Notify employee
     }

@@ -28,30 +28,33 @@ public interface IShiftTrader
     /// Offers to pickup a shift
     /// </summary>
     /// <param name="request"></param>
-    public void PickupShift(PickupOfferWithOptions offer);
+    public void PickupShift(PickupOffer offer);
     public void ApproveTrade(string tradeOfferID, bool isManager = false);
     public void ApprovePickup(string tradeOfferID);
     public void DenyTrade(string tradeOfferID, bool isManager = false);
     public void DenyPickup(string tradeOfferID);
 
 }
-public class ShiftTrader(ILogger<ShiftTrader> logger, ICollectionsProvider collectionProvider, IShiftScheduler scheduler, IShiftRetriever shiftRetriever, IAvailabiltyService availabilityService) : IShiftTrader
+public class ShiftTrader(ILogger<ShiftTrader> logger, IEntityRetriever entityRetriever, IShiftScheduler scheduler, IShiftRetriever shiftRetriever, IAvailabiltyService availabilityService) : IShiftTrader
 {
     private readonly ILogger<ShiftTrader> _logger=logger;
-    private readonly ICollectionsProvider _collectionsProvider = collectionProvider;
+    private readonly IEntityRetriever _entityRetriever = entityRetriever;
+    private readonly ICollectionsProvider _collectionsProvider = entityRetriever.CollectionsProvider;
     private readonly IShiftRetriever _shiftRetriever = shiftRetriever;
     private readonly IAvailabiltyService _availabilityService = availabilityService;
     private readonly IShiftScheduler _scheduler = scheduler;
 
     private void ExecuteTrade(TradeOffer tradeOffer)
     {
+        
         // Unassign the shift from the coverage request 
-        var coverageRequest = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.CoverageRequests, tradeOffer.CoverageRequestID);
-        var coverageRequestShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, coverageRequest.ShiftID);
+        var coverageRequest = _entityRetriever.GetEntityOrThrow(_collectionsProvider.CoverageRequests, tradeOffer.CoverageRequestID); ;
+        var coverageRequestShift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, coverageRequest.ShiftID);
+
         _scheduler.UnassignShift(coverageRequest.ShiftID);
 
         //Unassign the shift offered for the trade
-        var offeredShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, tradeOffer.ShiftOfferedID);
+        var offeredShift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, tradeOffer.ShiftOfferedID);
         _scheduler.UnassignShift(tradeOffer.ShiftOfferedID);
 
         //Assign shift offered for trade to the employee requesting coverage.
@@ -70,7 +73,7 @@ public class ShiftTrader(ILogger<ShiftTrader> logger, ICollectionsProvider colle
     }
     public void RequestCoverage(CoverageRequest request)
     {
-        var shift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, request.ShiftID);
+        var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, request.ShiftID);
         if (shift.ShiftPeriod.Start < DateTime.Now)
         {
             throw new Exception("Shift already started. Cannot request coverage.");
@@ -86,8 +89,8 @@ public class ShiftTrader(ILogger<ShiftTrader> logger, ICollectionsProvider colle
     public void OfferTrade(TradeOffer offer)
     {
         // Assert shift offered exists.
-        var offeredShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, offer.ShiftOfferedID);
-        var coverageReq = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.CoverageRequests, offer.CoverageRequestID);
+        var offeredShift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, offer.ShiftOfferedID);
+        var coverageReq = _entityRetriever.GetEntityOrThrow(_collectionsProvider.CoverageRequests, offer.CoverageRequestID);
         if (offeredShift.ShiftPeriod.Start < DateTime.Now)
         {
             throw new Exception("Cannot offer a trade for a shift that has already started.");
@@ -101,10 +104,9 @@ public class ShiftTrader(ILogger<ShiftTrader> logger, ICollectionsProvider colle
         throw new Exception("Cannot offer a trade for a shift that is only up for trade.");
     }
 
-    public void PickupShift(PickupOfferWithOptions offer) //Logic breakdown. Validate that the pertinent ID's exist. Then validate shift is actually open.
+    public void PickupShift(PickupOffer offer) //Logic breakdown. Validate that the pertinent ID's exist. Then validate shift is actually open.
     {
-        DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, offer.EmployeeID);
-        var openShift = DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, offer.OpenShiftID);
+        var openShift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, offer.OpenShiftID);
         if (!_availabilityService.IsEmployeeSchedulableForShift(offer.EmployeeID, offer.OpenShiftID))
         {
             throw new Exception("Shift cannot be picked up.");

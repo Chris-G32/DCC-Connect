@@ -1,6 +1,9 @@
-﻿using API.Models.QueryOptions;
+﻿using API.Constants;
+using API.Models.QueryOptions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace API.Models;
 
@@ -16,7 +19,8 @@ public class Shift : MongoObject
         get { return _shiftPeriod; }
         set
         {
-            if (value.Duration().TotalHours < 0) {
+            if (value.Duration().TotalHours < 0)
+            {
                 throw new ArgumentException($"A shift may not start after it ends.");
 
             }
@@ -31,6 +35,7 @@ public class Shift : MongoObject
     /// <summary>
     /// Address of the home where the shift is taking place
     /// </summary>
+    [Length(0,70)]
     public string Location { get; set; }
     /// <summary>
     /// Role of the employee working the shift
@@ -40,5 +45,6 @@ public class Shift : MongoObject
     /// Employee assigned to the shift, null or empty if none.
     /// </summary>
     [BsonIgnoreIfNull]
-    public string? EmployeeID { get; set; }
+    [JsonIgnore]
+    public ObjectId? EmployeeID { get; set; }
 }

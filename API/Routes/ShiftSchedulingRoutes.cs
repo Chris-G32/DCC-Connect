@@ -30,11 +30,12 @@ public class ShiftSchedulingRoutes : CarterModule
     {
         try
         {
-            _shiftScheduler.UnassignShift(assignmentID);
+            var assignmentObjId=ObjectId.Parse(assignmentID);
+            _shiftScheduler.UnassignShift(assignmentObjId);
         }
         catch (Exception e)
         {
-            return Results.Problem("Error unassinging shift");
+            return Results.Problem("Error unassigning shift");
         }
 
         return Results.Ok("Assignment removed!");
@@ -43,7 +44,8 @@ public class ShiftSchedulingRoutes : CarterModule
     {
         try
         {
-            _shiftScheduler.DeleteShift(shiftID);
+            var shiftObjectId = ObjectId.Parse(shiftID);
+            _shiftScheduler.DeleteShift(shiftObjectId);
         }
         catch (Exception e)
         {

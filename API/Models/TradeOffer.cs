@@ -1,3 +1,6 @@
+using API.Constants;
+using MongoDB.Bson;
+
 namespace API.Models;
 
 
@@ -7,11 +10,11 @@ public class TradeOffer : MongoObject, IRequireManagerApproval, IRequireEmployee
     /// <summary>
     /// ID of coverage request the offer is for
     /// </summary>
-    public string CoverageRequestID { get; set; }
+    public ObjectId CoverageRequestID { get; set; }
     /// <summary>
     /// ID of the shift being offered for trade.
     /// </summary>
-    public string ShiftOfferedID { get; set; }
+    public ObjectId ShiftOfferedID { get; set; }
     /// <summary>
     /// Whether the employee associated with the coverage request has approved it or not. Null means no action taken yet
     /// </summary>
