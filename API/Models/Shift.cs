@@ -3,6 +3,7 @@ using API.Models.QueryOptions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace API.Models;
 
@@ -44,5 +45,6 @@ public class Shift : MongoObject
     /// Employee assigned to the shift, null or empty if none.
     /// </summary>
     [BsonIgnoreIfNull]
+    [JsonIgnore]
     public ObjectId? EmployeeID { get; set; }
 }

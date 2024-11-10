@@ -3,14 +3,9 @@
 namespace API.Models.QueryOptions;
 
 
-public interface OpenShiftQueryOptions
-{
-    /// <summary>
-    /// Only get shifts that start within this range
-    /// </summary>
-    TimeRange? TimeFilter { get; set; }
-}
-public interface ShiftQueryOptions : OpenShiftQueryOptions
+public interface IOpenShiftQueryOptions:IHaveTimeFilterOption;
+
+public interface ShiftQueryOptions : IOpenShiftQueryOptions
 {
     /// <summary>
     /// Only get shifts assigned to this employee

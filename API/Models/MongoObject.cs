@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
+using System.Text.Json.Serialization;
 
 namespace API.Models;
 
@@ -12,5 +13,6 @@ public abstract class MongoObject
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     [BsonIgnoreIfNull]
+    [JsonIgnore]
     public ObjectId? Id { get; set; }
 }

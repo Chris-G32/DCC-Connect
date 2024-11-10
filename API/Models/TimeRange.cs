@@ -1,4 +1,4 @@
-﻿namespace API.Models.QueryOptions;
+﻿namespace API.Models;
 
 public class TimeRange
 {
