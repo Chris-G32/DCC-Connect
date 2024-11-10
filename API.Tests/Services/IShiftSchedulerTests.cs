@@ -11,8 +11,8 @@ using Microsoft.Extensions.Logging;
 using AutoFixture;
 using MongoDB.Bson;
 using MongoDB.Driver.Core.Misc;
-using AutoFixture.AutoMoq;
-using API.Models.QueryOptions;
+using API.Errors;
+using API.Constants.Errors;
 
 
 namespace API.Tests.Services;
@@ -70,75 +70,53 @@ public class IShiftSchedulerTests
         _entityRetriever = _fixture.Freeze<Mock<IEntityRetriever>>();
         _mockAvailabiltyService = _fixture.Freeze<Mock<IAvailabiltyService>>();
     }
+
     [TestMethod]
-    public void TestAssignShift()
+    [DataRow(null, false, DisplayName = "Case 1: Should throw error saying employee unschedulable")]
+    [DataRow(false, true, DisplayName = "Case 2: Should throw an exception due to failed assignment")]
+    [DataRow(true, true, DisplayName = "Case 3: Should not throw any exception")]
+    public void TestAssignShift(bool? updateSucceeds, bool isEmployeeSchedulable)
     {
-
-        /// Test cases
-        var sut = () =>
+        // Arrange
+        if (updateSucceeds != null)
         {
+            var updateResult = (bool)updateSucceeds ? new UpdateResult.Acknowledged(1, 1, 1) : new UpdateResult.Acknowledged(0, 0, 0);
+            SetupShiftMock(_shiftMock, updateResult);
+        }
+        _mockAvailabiltyService
+            .Setup(serv => serv.IsEmployeeSchedulableForShift(It.IsAny<ObjectId>(), It.IsAny<ObjectId>()))
+            .Returns(isEmployeeSchedulable);
 
-            // Makes private applyshiftassignment method return true
-            SetupShiftMock(_shiftMock, new UpdateResult.Acknowledged(1, 1, 1));
-            _mockAvailabiltyService.Setup(serv => serv.IsEmployeeSchedulableForShift(It.IsAny<ObjectId>(), It.IsAny<ObjectId>())).Returns(true);
-            var created = _fixture.Create<UpdateResult>();
-            var scheduler = _fixture.Create<ShiftScheduler>();
-            scheduler.AssignShift(_fixture.Build<ShiftAssignment>()
-            .With(assignment => assignment.ShiftID, It.IsAny<ObjectId>())
-            .With(assignment => assignment.EmployeeID, It.IsAny<ObjectId>())
-            .Create());
+        var scheduler = _fixture.Create<ShiftScheduler>();
+        var shiftAssignment = _fixture.Create<ShiftAssignment>();
 
-        };
-
-        var sut2 = () =>
+        // Act & Assert
+        var act = () => scheduler.AssignShift(shiftAssignment);
+        int expectedTimes = 1;
+        if (isEmployeeSchedulable==false)
         {
-
-            // Create the UpdateResult instance first
-            SetupShiftMock(_shiftMock, new UpdateResult.Acknowledged(0, 0, 0));
-            _mockAvailabiltyService.Setup(serv => serv.IsEmployeeSchedulableForShift(It.IsAny<ObjectId>(), It.IsAny<ObjectId>())).Returns(true);
-            var scheduler = _fixture.Create<ShiftScheduler>();
-            scheduler.AssignShift(_fixture.Build<ShiftAssignment>()
-            .With(assignment => assignment.ShiftID, It.IsAny<ObjectId>())
-            .With(assignment => assignment.EmployeeID)
-            .Create());
-
-        };
-
-        var sut3 = () =>
+            expectedTimes = 0;
+            Console.WriteLine("Ran should throw employee unschedulable sut.");
+            act.Should().Throw<DCCApiException>().WithMessage(ShiftSchedulerErrorConstants.EmployeeNotSchedulableError);
+        }
+        else if (updateSucceeds==false)
         {
-            // Now freeze the created instance
-            _mockAvailabiltyService.Setup(serv => serv.IsEmployeeSchedulableForShift(It.IsAny<ObjectId>(), It.IsAny<ObjectId>())).Returns(false);
-            var scheduler = _fixture.Create<ShiftScheduler>();
-            scheduler.AssignShift(_fixture.Build<ShiftAssignment>()
-            .With(assignment => assignment.ShiftID, It.IsAny<ObjectId>())
-            .With(assignment => assignment.EmployeeID)
-            .Create());
+            Console.WriteLine("Ran should throw update fail sut.");
+            act.Should().Throw<DCCApiException>().WithMessage(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
+        }
+        else
+        {
+            Console.WriteLine("Ran should not throw sut.");
+            act.Should().NotThrow<Exception>();
+        }
 
-        };
-
-        sut.Should().NotThrow<Exception>();
         _shiftMock.Verify(collection => collection.UpdateOne(
                 It.IsAny<FilterDefinition<Shift>>(),
                 It.IsAny<UpdateDefinition<Shift>>(),
                 It.IsAny<UpdateOptions>(),
-                It.IsAny<CancellationToken>()
-                ), Times.Once(), "Update was called, when it shouldnt have been");
-
-        sut2.Should().Throw<Exception>();
-        _shiftMock.Verify(collection => collection.UpdateOne(
-                It.IsAny<FilterDefinition<Shift>>(),
-                It.IsAny<UpdateDefinition<Shift>>(),
-                It.IsAny<UpdateOptions>(),
-                It.IsAny<CancellationToken>()
-                ), Times.Exactly(2), "Update was called, when it shouldnt have been");
-
-        sut3.Should().Throw<Exception>();
-        _shiftMock.Verify(collection => collection.UpdateOne(
-                It.IsAny<FilterDefinition<Shift>>(),
-                It.IsAny<UpdateDefinition<Shift>>(),
-                It.IsAny<UpdateOptions>(),
-                It.IsAny<CancellationToken>()
-                ), Times.Exactly(2), "Update was called, when it shouldnt have been");
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(expectedTimes),
+            "Update was called an unexpected number of times.");
     }
     [TestMethod]
     public void ClientIsNotNull()
@@ -162,7 +140,7 @@ public class IShiftSchedulerTests
         var tryCreatePastShift = () =>
         {
             // Construct a shift that starts in the past
-            var startTime = DateTime.Now.AddDays(getRandomDouble(1,100)*-1);
+            var startTime = DateTime.Now.AddDays(getRandomDouble(1, 100) * -1);
             var range = _fixture.Build<TimeRange>()
             .With(tr => tr.Start, startTime).With(tr => tr.End, startTime.AddHours(7))
             .Create();
@@ -204,11 +182,11 @@ public class IShiftSchedulerTests
 
         var tryDeleteShiftWithEmployee = () =>
         {
-            var shift = _fixture.Build<Shift>().With(shift=>shift.Id, _fixture.Create<ObjectId>()).With(shift => shift.EmployeeID, _fixture.Create<ObjectId>()).Create();
+            var shift = _fixture.Build<Shift>().With(shift => shift.Id, _fixture.Create<ObjectId>()).With(shift => shift.EmployeeID, _fixture.Create<ObjectId>()).Create();
             _entityRetriever.Setup(et => et.GetEntityOrThrow(It.IsAny<IMongoCollection<Shift>>(), It.IsAny<ObjectId>()))
             .Returns(shift);
             var scheduler = _fixture.Create<ShiftScheduler>();
-            var shiftId = shift.Id??throw new Exception("Id should not be null.");
+            var shiftId = shift.Id ?? throw new Exception("Id should not be null.");
             scheduler.DeleteShift(shiftId);
         };
         var tryDeleteShiftWithoutEmployee = () =>
@@ -233,16 +211,16 @@ public class IShiftSchedulerTests
     }
 
     [TestMethod]
-    [DataRow(false,false, 0, 0)] // UnassignShiftWithNoAssignmentTest
+    [DataRow(false, false, 0, 0)] // UnassignShiftWithNoAssignmentTest
     [DataRow(false, true, 1, 0)] // UnassignAssignedShiftTest
     [DataRow(true, false, 0, 0)]  // UnassignAssignedShiftWithCoverageRequestTest
-    [DataRow(true,true, 1, 1)]  // UnassignedShiftWithLingeringCoverageRequestTest
+    [DataRow(true, true, 1, 1)]  // UnassignedShiftWithLingeringCoverageRequestTest
     public void UnassignShiftTest(bool hasCoverageRequest, bool isShiftAssigned, int coverageRequestDeleteTimes, int tradeOfferDeleteTimes)
     {
 
         // Arrange
         Shift shift = isShiftAssigned ? _fixture.Create<Shift>() : _fixture.Build<Shift>().Without(s => s.EmployeeID).Create();
-        CoverageRequest? coverage =  hasCoverageRequest ? _fixture.Create<CoverageRequest>() : null;
+        CoverageRequest? coverage = hasCoverageRequest ? _fixture.Create<CoverageRequest>() : null;
 
         // Mocking the entity retrieval
         _entityRetriever.Setup(er => er.GetEntityOrThrow(It.IsAny<IMongoCollection<Shift>>(), It.IsAny<ObjectId>())).Returns(shift);
