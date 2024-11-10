@@ -105,7 +105,7 @@ public class ShiftTradingRoutes : CarterModule
 
         return Results.Ok("Assignment removed!");
     }
-    public async Task<IResult> PickupShift(PickupOfferWithOptions offer, HttpRequest request)// TODO
+    public async Task<IResult> PickupShift(PickupOffer offer, HttpRequest request)// TODO
     {
         try
         {

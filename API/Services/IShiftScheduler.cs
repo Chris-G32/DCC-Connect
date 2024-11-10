@@ -1,4 +1,6 @@
 ﻿using API.Constants;
+using API.Constants.Errors;
+using API.Errors;
 using API.Models;
 using API.Utils;
 using MongoDB.Bson;
@@ -43,12 +45,12 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
 
         if (!_availabiltyService.IsEmployeeSchedulableForShift(assignment.EmployeeID, assignment.ShiftID))
         {
-            throw new Exception("Can't assign employee to shift.");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.EmployeeNotSchedulableError);
         }
         if (!ApplyShiftAssignment(assignment))
         {
             _logger.LogInformation($"Failed to assign ");
-            throw new Exception("Shift assignment failed.");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
         }
         //TODO: Notify employee
     }
@@ -57,7 +59,7 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
         //TODO: Check the location exists.
         if (shift.ShiftPeriod.Start.ToUniversalTime() < DateTime.Now.ToUniversalTime())
         {
-            throw new Exception("Cannot create a new shift in the past.");
+            throw new Exception("");
         }
         _collectionsProvider.Shifts.InsertOne(shift);
     }
@@ -66,7 +68,7 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
         var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
         if (shift.EmployeeID != null)
         {
-            throw new Exception("Please unassign a shift before deleting it.");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.CannotCreateShiftInThePastError);
         }
         _collectionsProvider.Shifts.FindOneAndDelete(shift => shift.Id == shiftID);
     }
@@ -84,11 +86,14 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
             _collectionsProvider.TradeOffers.DeleteMany(offer => offer.CoverageRequestID == coverage.ShiftID);
         }
 
-        ApplyShiftAssignment(assignment: new ShiftAssignment
+        if(!ApplyShiftAssignment(assignment: new ShiftAssignment
         {
             EmployeeID = null,
             ShiftID = shiftID
-        });
+        }))
+        {
+            throw new DCCApiException(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
+        }
 
         //TODO: Notify employee
     }

@@ -8,12 +8,12 @@ namespace API.Services;
 public interface IShiftRetriever
 {
     List<Shift> GetShifts(ShiftQueryOptions options);
-    List<ObjectId> GetOpenShiftIDs(OpenShiftQueryOptions options);
+    List<ObjectId> GetOpenShiftIDs(IOpenShiftQueryOptions options);
 }
 public class ShiftRetriever(ICollectionsProvider provider) : IShiftRetriever
 {
     ICollectionsProvider _collectionsProvider = provider;
-    private FilterDefinition<Shift> BuildFilter(OpenShiftQueryOptions options,in FilterDefinitionBuilder<Shift> builder)
+    private FilterDefinition<Shift> BuildFilter(IOpenShiftQueryOptions options,in FilterDefinitionBuilder<Shift> builder)
     {
         FilterDefinition<Shift> filter = builder.Empty;
         if (options.TimeFilter != null)
@@ -30,11 +30,11 @@ public class ShiftRetriever(ICollectionsProvider provider) : IShiftRetriever
         {
             filter = filter & builder.Eq(shift => shift.EmployeeID, options.EmployeeIDFilter);
         }
-        filter = filter & BuildFilter((OpenShiftQueryOptions)options,builder);
+        filter = filter & BuildFilter((IOpenShiftQueryOptions)options,builder);
         return filter;
 
     }
-    public List<ObjectId> GetOpenShiftIDs(OpenShiftQueryOptions options)
+    public List<ObjectId> GetOpenShiftIDs(IOpenShiftQueryOptions options)
     {
 
         var openToPickupShiftIDs = _collectionsProvider.CoverageRequests.Find(

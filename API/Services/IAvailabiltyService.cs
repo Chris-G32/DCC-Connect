@@ -1,5 +1,4 @@
 ﻿using API.Models;
-using API.Models.QueryOptions;
 using API.Utils;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;

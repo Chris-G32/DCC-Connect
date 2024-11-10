@@ -28,7 +28,7 @@ public interface IShiftTrader
     /// Offers to pickup a shift
     /// </summary>
     /// <param name="request"></param>
-    public void PickupShift(PickupOfferWithOptions offer);
+    public void PickupShift(PickupOffer offer);
     public void ApproveTrade(string tradeOfferID, bool isManager = false);
     public void ApprovePickup(string tradeOfferID);
     public void DenyTrade(string tradeOfferID, bool isManager = false);
@@ -104,7 +104,7 @@ public class ShiftTrader(ILogger<ShiftTrader> logger, IEntityRetriever entityRet
         throw new Exception("Cannot offer a trade for a shift that is only up for trade.");
     }
 
-    public void PickupShift(PickupOfferWithOptions offer) //Logic breakdown. Validate that the pertinent ID's exist. Then validate shift is actually open.
+    public void PickupShift(PickupOffer offer) //Logic breakdown. Validate that the pertinent ID's exist. Then validate shift is actually open.
     {
         var openShift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, offer.OpenShiftID);
         if (!_availabilityService.IsEmployeeSchedulableForShift(offer.EmployeeID, offer.OpenShiftID))
