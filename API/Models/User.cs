@@ -4,33 +4,26 @@ using System.Text;
 
 namespace API.Models
 {
-    /// <summary>
-    /// User class representing application users, storing personal and role-based data.
-    /// </summary>
     public class User : MongoObject
     {
-        // First name of the user, used for personalized interactions and JWT claims
+        // First name for personalization and JWT claims
         public string FirstName { get; set; }
 
-        // Last name of the user, included in JWT claims for personalization
+        // Last name for personalization and JWT claims
         public string LastName { get; set; }
 
-        // Email address used for login and two-factor authentication
+        // Email for login and 2FA
         public string Email { get; set; }
 
-        // User's password hash, validated on login
-        public string PasswordHash { get; set; } // Only store the hashed password
+        // Hashed password, stored for auth
+        public string PasswordHash { get; set; }
 
-        // Role defines user's access level, stored in JWT for role-based permissions
+        // Role for defining user access level
         public Role Role { get; set; }
 
-        /// <summary>
-        /// Hashes the provided password using a secure algorithm and stores the hash.
-        /// </summary>
-        /// <param name="password">The plain-text password to hash.</param>
+        // Hashes the password and stores the hash
         public void SetPassword(string password)
         {
-            // Example using SHA256 - consider using a stronger hashing method like bcrypt
             using (var sha256 = SHA256.Create())
             {
                 var bytes = Encoding.UTF8.GetBytes(password);
@@ -39,14 +32,9 @@ namespace API.Models
             }
         }
 
-        /// <summary>
-        /// Verifies a password against the stored hash.
-        /// </summary>
-        /// <param name="password">The plain-text password to verify.</param>
-        /// <returns>True if the password is valid, false otherwise.</returns>
+        // Verifies the input password by comparing hashes
         public bool VerifyPassword(string password)
         {
-            // Hash the input password and compare with the stored hash
             using (var sha256 = SHA256.Create())
             {
                 var bytes = Encoding.UTF8.GetBytes(password);

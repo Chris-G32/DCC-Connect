@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -8,45 +7,47 @@ using API.Models;
 
 namespace API.Services
 {
-    /// <summary>
-    /// Service to generate JWT auth tokens with user-specific claims for authentication.
-    /// </summary>
     public class AuthService
     {
-        private readonly string _authSecret; // Secret key to secure the JWT
+        private readonly string _jwtSecret; // Secret key for signing JWT tokens
+        private readonly int _jwtExpirationMinutes; // Token expiration time in minutes
+        private readonly EmailService _emailService; // Service to handle email-related actions
 
-        public AuthService(string authSecret)
+        public AuthService(string jwtSecret, int jwtExpirationMinutes, EmailService emailService)
         {
-            _authSecret = authSecret;
+            _jwtSecret = jwtSecret;
+            _jwtExpirationMinutes = jwtExpirationMinutes;
+            _emailService = emailService;
         }
 
-        /// <summary>
-        /// Generates a JWT token with claims for FirstName, LastName, and Role.
-        /// </summary>
-        /// <param name="user">The user object containing details for the token</param>
-        /// <returns>A JWT token string</returns>
-        public string GenerateToken(User user)
+        // Validates the 2FA code and generates a JWT token if the code is correct
+        public string? AuthenticateAndGenerateToken(User user, string code)
         {
-            // Claims are pieces of information about the user, added to the token for future use
-            var claims = new List<Claim>
+            // Check if the 2FA code is valid
+            if (!_emailService.ValidateTwoFactorCode(user.Email, code))
             {
-                new Claim(ClaimTypes.Name, user.Email), // Email for user identification
-                new Claim("FirstName", user.FirstName),  // First name as custom claim
-                new Claim("LastName", user.LastName),    // Last name as custom claim
-                new Claim(ClaimTypes.Role, RoleConversions.ToString(user.Role)) // Role for access control
+                return null; // Return null if the code is invalid
+            }
+
+            // Create JWT token with user's claims (email, name, role)
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_jwtSecret);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] // Add user details as claims
+                {
+                    new Claim(ClaimTypes.Name, user.FirstName),
+                    new Claim(ClaimTypes.Surname, user.LastName),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role.ToString())
+                }),
+                Expires = DateTime.UtcNow.AddMinutes(_jwtExpirationMinutes), // Set token expiration
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature) // Secure token signing
             };
 
-            // Key and credentials to secure the token
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authSecret));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            // Create the token with claims, expiration, and credentials
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1), // 1-hour token validity
-                signingCredentials: credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(token); // Serialize to string
+            var token = tokenHandler.CreateToken(tokenDescriptor); // Generate the token
+            return tokenHandler.WriteToken(token); // Return the JWT token as a string
         }
     }
 }
