@@ -10,6 +10,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using API.Services.Retrievers;
 namespace API.Services;
 
 public interface IShiftTrader
