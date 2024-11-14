@@ -1,4 +1,5 @@
-﻿using API.Constants;
+﻿using API.Config;
+using API.Constants;
 using API.Database;
 using API.Models;
 using MongoDB.Driver;
@@ -12,13 +13,15 @@ public interface IDatabaseProvider
 
 public class DatabaseProvider : IDatabaseProvider
 {
-    private readonly IMongoDatabase _database;
-    private readonly IConfiguration _config;
-    public DatabaseProvider(IDatabaseInitializer dbInit,IDBClientProvider clientProvider )
+    private readonly IDBClientProvider _clientProvider;
+    private readonly MongoDBSettings _config;
+    public DatabaseProvider(IDatabaseInitializer dbInit, IDBClientProvider clientProvider, IMongoDBSettingsProvider settingsProvider, ILogger<DatabaseProvider> loggger)
     {
-        dbInit.InitializeDatabase();
-        _database=clientProvider.Client.GetDatabase(DatabaseConstants.DatabaseName);
+        _ = Task.Run(dbInit.InitializeDatabase);
+        _clientProvider = clientProvider;
+        _config = settingsProvider.GetSettings();
     }
 
-    public IMongoDatabase Database => _database;
+    public IMongoDatabase Database => _clientProvider.Client.GetDatabase(_config.Database);
+
 }

@@ -7,11 +7,13 @@ public class MongoDBSettings
     public int Port { get; set; }
     public DbAuth? Authentication { get; set; }
     public string Database { get; set; }
+    public int? ConnectionTimeoutMS { get; set; }
     public MongoClientSettings GetClientSettings()
     {
         var settings = new MongoClientSettings
         {
-            Server = new MongoServerAddress(URL, Port)
+            Server = new MongoServerAddress(URL, Port),
+            ServerSelectionTimeout = TimeSpan.FromMilliseconds(ConnectionTimeoutMS ?? 30000)
         };
         if (Authentication != null)
         {
