@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Text;
+using MimeKit.Encodings;
+using MongoDB.Bson;
 
 namespace API.Models
 {
     public class User : MongoObject
     {
-        // First name for personalization and JWT claims
-        public string FirstName { get; set; }
-
-        // Last name for personalization and JWT claims
-        public string LastName { get; set; }
 
         // Email for login and 2FA
         public string Email { get; set; }
@@ -18,8 +15,14 @@ namespace API.Models
         // Hashed password, stored for auth
         public string PasswordHash { get; set; }
 
+        // Secret Key for JWT Auth token and validation, each one is uniquely generated
+        public string JWTSecret { get; set; }
+
         // Role for defining user access level
         public Role Role { get; set; }
+
+        // Used for JWT auth and referencing
+        public ObjectId? employeeID { get; set; } // Made nullable
 
         // Hashes the password and stores the hash
         public void SetPassword(string password)

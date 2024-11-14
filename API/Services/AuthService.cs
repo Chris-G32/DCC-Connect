@@ -5,17 +5,18 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using API.Models;
 
+
 namespace API.Services
 {
     public class AuthService
     {
-        private readonly string _jwtSecret; // Secret key for signing JWT tokens
+        private readonly string _jwtSecret; // Secret key for signing JWT token, created at User creation
         private readonly int _jwtExpirationMinutes; // Token expiration time in minutes
         private readonly EmailService _emailService; // Service to handle email-related actions
 
-        public AuthService(string jwtSecret, int jwtExpirationMinutes, EmailService emailService)
+        public AuthService(User user, int jwtExpirationMinutes, EmailService emailService)
         {
-            _jwtSecret = jwtSecret;
+            _jwtSecret = user.JWTSecret;
             _jwtExpirationMinutes = jwtExpirationMinutes;
             _emailService = emailService;
         }
@@ -33,20 +34,18 @@ namespace API.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSecret);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var tokenAuth = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[] // Add user details as claims
                 {
-                    new Claim(ClaimTypes.Name, user.FirstName),
-                    new Claim(ClaimTypes.Surname, user.LastName),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role.ToString())
-                }),
+            new Claim("EmployeeID", user.employeeID?.ToString() ?? string.Empty), // Add employeeID as a custom claim
+
+        }),
                 Expires = DateTime.UtcNow.AddMinutes(_jwtExpirationMinutes), // Set token expiration
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature) // Secure token signing
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor); // Generate the token
+            var token = tokenHandler.CreateToken(tokenAuth); // Generate the token
             return tokenHandler.WriteToken(token); // Return the JWT token as a string
         }
     }

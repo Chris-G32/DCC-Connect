@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using API.Models;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
 
 namespace API.Services
 {
@@ -43,20 +44,18 @@ namespace API.Services
             }
         }
 
-        // Extracts user details from a valid JWT token
-        public User? GetUserFromToken(string token)
+        // Extracts employeeID from a valid JWT token
+        public ObjectId? GetEmployeeIdFromToken(string token)
         {
             var principal = ValidateToken(token);
             if (principal == null) return null; // Return null if token is invalid
 
-            // Map claims to User object
-            return new User
-            {
-                FirstName = principal.FindFirst(ClaimTypes.Name)?.Value,
-                LastName = principal.FindFirst(ClaimTypes.Surname)?.Value,
-                Email = principal.FindFirst(ClaimTypes.Email)?.Value,
-                Role = Enum.TryParse(principal.FindFirst(ClaimTypes.Role)?.Value, out Role role) ? role : default
-            };
+            // Extract employeeID claim
+            var employeeIdClaim = principal.FindFirst("EmployeeID")?.Value;
+
+            return employeeIdClaim != null && ObjectId.TryParse(employeeIdClaim, out var employeeId)
+                ? employeeId
+                : (ObjectId?)null; // Return the employeeID as an ObjectId or null if invalid
         }
     }
 }
