@@ -7,25 +7,37 @@ using API.Models;
 
 namespace API.Services
 {
-    public class EmailService
+    // Interface for the Email Service, providing methods for sending emails and managing 2FA and password resets
+    public interface IEmailService
+    {
+        Task<string> SendTwoFactorCodeAsync(string recipientEmail);
+        bool ValidateTwoFactorCode(string recipientEmail, string code);
+        Task<string> SendPasswordResetCodeAsync(string recipientEmail);
+        bool ResetPassword(string recipientEmail, string code, User user, string newPassword);
+        Task SendEmailAsync(string recipientEmail, string subject, string body);
+    }
+
+    public class IEmailService : IEmailService
     {
         // SMTP server details for Gmail
         private readonly string _smtpServer = "smtp.gmail.com";
         private readonly int _smtpPort = 587;
         private readonly string _smtpUser; // Store the SMTP username (email)
         private readonly string _smtpPass; // Store the SMTP password (app password)
-        private static readonly Dictionary<string, string> _twoFactorCodes = new Dictionary<string, string>(); // To store 2FA codes temp
-        private static readonly Dictionary<string, string> _passwordResetCodes = new Dictionary<string, string>(); // To store password reset codes
+        
+        // Dictionary to store temporary 2FA codes for each user
+        private static readonly Dictionary<string, string> _twoFactorCodes = new Dictionary<string, string>();
+        
+        // Dictionary to store temporary password reset codes for each user
+        private static readonly Dictionary<string, string> _passwordResetCodes = new Dictionary<string, string>();
 
         // Constructor to initialize SMTP credentials
-        /* Explicit login credentials (remove/fix) */
-        public EmailService(string smtpUser, string smtpPass)
+        public IEmailService(string smtpUser, string smtpPass)
         {
             _smtpUser = "dccconnecttest@protonmail.com";
             _smtpPass = "T3stP@ssword322!";
         }
 
-        /* 2FA for Auth */
         // Method to send a 2FA code to the user's email
         public async Task<string> SendTwoFactorCodeAsync(string recipientEmail)
         {
@@ -48,6 +60,7 @@ namespace API.Services
                 await client.SendAsync(message);
                 Console.WriteLine("2FA code sent!");
 
+                // Store the generated code for validation later
                 _twoFactorCodes[recipientEmail] = code;
             }
             catch (Exception ex)
@@ -66,6 +79,7 @@ namespace API.Services
         // Method to validate the 2FA code entered by the user
         public bool ValidateTwoFactorCode(string recipientEmail, string code)
         {
+            // Check if the code matches the one stored, then remove it
             if (_twoFactorCodes.ContainsKey(recipientEmail) && _twoFactorCodes[recipientEmail] == code)
             {
                 _twoFactorCodes.Remove(recipientEmail);
@@ -74,7 +88,6 @@ namespace API.Services
             return false;
         }
 
-        /* Password Reset */
         // Method to send a password reset code to the user's email
         public async Task<string> SendPasswordResetCodeAsync(string recipientEmail)
         {
@@ -97,6 +110,7 @@ namespace API.Services
                 await client.SendAsync(message);
                 Console.WriteLine("Password reset code sent!");
 
+                // Store the generated code for validation later
                 _passwordResetCodes[recipientEmail] = code;
             }
             catch (Exception ex)
@@ -115,6 +129,7 @@ namespace API.Services
         // Method to validate the reset code and reset the password if valid
         public bool ResetPassword(string recipientEmail, string code, User user, string newPassword)
         {
+            // Check if the code matches the one stored for this email
             if (_passwordResetCodes.ContainsKey(recipientEmail) && _passwordResetCodes[recipientEmail] == code)
             {
                 user.SetPassword(newPassword); // Update the user's password hash
@@ -124,7 +139,6 @@ namespace API.Services
             return false;
         }
 
-        /* Generate Verification Codes */
         // Method to generate a random 6-digit verification code
         private string GenerateVerificationCode()
         {
@@ -132,15 +146,13 @@ namespace API.Services
             return random.Next(100000, 999999).ToString();
         }
 
-        /* Simple Email */
-        // Method to send a simple email
+        // Method to send a simple email with a subject and body
         public async Task SendEmailAsync(string recipientEmail, string subject, string body)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress("DCC Connect", _smtpUser));
             message.To.Add(new MailboxAddress("", recipientEmail));
             message.Subject = subject;
-
             message.Body = new TextPart("plain")
             {
                 Text = body

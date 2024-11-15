@@ -22,7 +22,7 @@ namespace API.Models
         public Role Role { get; set; }
 
         // Used for JWT auth and referencing
-        public ObjectId? employeeID { get; set; } // Made nullable
+        public ObjectId? EmployeeID { get; set; } // Made nullable
 
         // Hashes the password and stores the hash
         public void SetPassword(string password)
