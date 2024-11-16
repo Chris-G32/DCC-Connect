@@ -46,6 +46,7 @@ builder.Services.AddSingleton<IAvailabiltyService, AvailablityService>();
 builder.Services.AddSingleton<IShiftScheduler, ShiftScheduler>();
 builder.Services.AddSingleton<IShiftQueryExecuter, ShiftQueryExecuter>();
 builder.Services.AddSingleton<IEmployeeQueryExecuter, EmployeeQueryExecuter>();
+builder.Services.AddSingleton<ICoverageRequestQueryExecuter, CoverageRequestQueryExecuter>();
 builder.Services.AddSingleton<IShiftTrader, ShiftTrader>();
 var app = builder.Build();
 // Configure the HTTP request pipeline.

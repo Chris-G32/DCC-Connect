@@ -4,17 +4,19 @@ using System.Text.Json.Serialization;
 
 namespace API.Models.QueryOptions;
 
-public interface IEmployeeQueryOptions:IHaveIdFilterOption,IHaveTimeFilterOption
+public interface IEmployeeQueryOptions:IHaveTimeFilterOption
 {
+    public string? EmployeeRole { get; set; }
 }
 public class EmployeeQueryOptions : IEmployeeQueryOptions
 {
-    [JsonIgnore]
-    public ObjectId? UniqueID { get; set; }
-    public string? UniqueIDFilterString { get { return UniqueID.ToString(); } set { UniqueID = ObjectId.Parse(value); } }
     /// <summary>
     /// This filter's for employees that are available during a time range. This is intended to be used to provide employees that could be scheduled for a specific shift, or day.
     /// </summary>
     public TimeRange? TimeFilter { get; set; }
+    /// <summary>
+    /// This filter's for employees that have a specific role.
+    /// </summary>
+    public string? EmployeeRole { get; set; }
 
 }

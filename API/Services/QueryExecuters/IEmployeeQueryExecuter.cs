@@ -1,4 +1,6 @@
-﻿using API.Models;
+﻿using API.Constants;
+using API.Errors;
+using API.Models;
 using API.Models.QueryOptions;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -8,7 +10,7 @@ namespace API.Services.QueryExecuters;
 public interface IEmployeeQueryExecuter
 {
     List<Employee> GetEmployees(EmployeeQueryOptions options);
-    ObjectId GetEmployee();
+    Employee GetEmployee(ObjectId id);
 }
 public class EmployeeQueryExecuter(ILogger<EmployeeQueryExecuter> logger, ICollectionsProvider collectionsProvider, IAvailabiltyService availabiltyService) : IEmployeeQueryExecuter
 {
@@ -18,15 +20,16 @@ public class EmployeeQueryExecuter(ILogger<EmployeeQueryExecuter> logger, IColle
     private FilterDefinition<Employee> BuildFilter(IEmployeeQueryOptions options, in FilterDefinitionBuilder<Employee> builder)
     {
         FilterDefinition<Employee> filter = builder.Empty;
-        if (options.UniqueID != null)
+        if (options.EmployeeRole != null)
         {
-            filter = filter & builder.Eq(employee => employee.Id, options.UniqueID);
+            filter = filter & builder.Eq(employee => employee.EmployeeRole, options.EmployeeRole);
         }
         return filter;
     }
-    public ObjectId GetEmployee()
+    public Employee GetEmployee(ObjectId id)
     {
-        throw new NotImplementedException();
+        var result = _collectionsProvider.Employees.Find(employee => employee.Id == id).FirstOrDefault() ?? throw new DCCApiException(ErrorConstants.ObjectDoesNotExistError);
+        return result;
     }
 
     public List<Employee> GetEmployees(EmployeeQueryOptions options)

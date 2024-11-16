@@ -80,11 +80,11 @@ public class ShiftTradingRoutes : CarterModule
         return Results.Ok("Pickup denied!");
     }
     
-    public async Task<IResult> RequestCoverage(CoverageRequest coverage, HttpRequest request)
+    public async Task<IResult> RequestCoverage(CoverageRequestBase<string> coverage, HttpRequest request)
     {
         try
         {
-            _trader.RequestCoverage(coverage);
+            _trader.RequestCoverage(new CoverageRequest(coverage));
         }
         catch (Exception e)
         {
