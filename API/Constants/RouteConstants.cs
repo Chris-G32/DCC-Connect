@@ -21,6 +21,10 @@ public class RouteConstants
     public static string ApprovePickupRoute { get; } = PickUpShiftRoute + "approve/";
     public static string DenyPickupRoute { get; } = PickUpShiftRoute + "deny/";
 
-    
+    //Query Routes
+    public static string GetEmployeeRoute { get; } = EmployeeRouteBase + "get/";
+    public static string GetShiftRoute { get; } = ShiftRouteBase + "get/";
+    public static string GetOpenShiftRoute { get; } = GetShiftRoute + "open/";
+
 
 }

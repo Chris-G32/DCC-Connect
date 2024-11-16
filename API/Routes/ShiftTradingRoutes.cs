@@ -31,6 +31,7 @@ public class ShiftTradingRoutes : CarterModule
         app.MapPut(RouteConstants.ApprovePickupRoute, ApprovePickup);
         app.MapPut(RouteConstants.DenyPickupRoute, DenyPickup);
     }
+
     public async Task<IResult> ApproveTrade(string tradeOfferId, HttpRequest request)
     {
         try

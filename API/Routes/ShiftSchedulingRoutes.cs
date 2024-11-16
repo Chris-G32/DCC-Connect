@@ -1,6 +1,9 @@
 ﻿using API.Constants;
+using API.Errors;
 using API.Models;
+using API.Models.QueryOptions;
 using API.Services;
+using API.Services.QueryExecuters;
 using Carter;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -13,10 +16,14 @@ public class ShiftSchedulingRoutes : CarterModule
 {
     IDatabaseProvider _databaseProvider;
     private readonly IShiftScheduler _shiftScheduler;
-    public ShiftSchedulingRoutes(IDatabaseProvider dbProvider, IShiftScheduler scheduler) : base()
+    private readonly IShiftQueryExecuter _retriever;
+    private readonly ILogger<ShiftSchedulingRoutes> _logger;
+    public ShiftSchedulingRoutes(IDatabaseProvider dbProvider, IShiftScheduler scheduler, IShiftQueryExecuter retriever, ILogger<ShiftSchedulingRoutes> logger) : base()
     {
         _databaseProvider = dbProvider;
         _shiftScheduler = scheduler;
+        _retriever = retriever;
+        _logger = logger;
     }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -25,7 +32,9 @@ public class ShiftSchedulingRoutes : CarterModule
 
         app.MapPut(RouteConstants.AssignShiftRoute, AssignShift);
         app.MapPut(RouteConstants.UnassignShiftRoute, UnassignShift);
+
     }
+    
     public async Task<IResult> UnassignShift(string assignmentID, HttpRequest request)
     {
         try
@@ -67,11 +76,11 @@ public class ShiftSchedulingRoutes : CarterModule
 
         return Results.Ok("Shift assigned!");
     }
-    public async Task<IResult> CreateShift(Shift shift, HttpRequest request)
+    public async Task<IResult> CreateShift(ShiftExternal shift, HttpRequest request)
     {
         try
         {
-            _shiftScheduler.CreateShift(shift);
+            _shiftScheduler.CreateShift(new Shift(shift));
         }
         catch (Exception e)
         {
