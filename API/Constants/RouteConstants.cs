@@ -21,6 +21,16 @@ public class RouteConstants
     public static string ApprovePickupRoute { get; } = PickUpShiftRoute + "approve/";
     public static string DenyPickupRoute { get; } = PickUpShiftRoute + "deny/";
 
-    
+    public static string CoverageRequestRouteBase { get; } = "coverage/";
+    //Query Routes
+    public static string GetEmployeeRoute { get; } = EmployeeRouteBase + "get/";
+    public static string GetEmployeeByIdRoute { get; } = GetEmployeeRoute + "{id}/";
+    public static string GetShiftRoute { get; } = ShiftRouteBase + "get/";
+    public static string GetShiftByIdRoute { get; } = GetShiftRoute + "{id}/";
+    public static string GetOpenShiftRoute { get; } = GetShiftRoute + "open/";
+    public static string GetCoverageRequestRoute { get; } = CoverageRequestRouteBase + "get/";
+    public static string GetCoverageRequestByIdRoute { get; } = GetCoverageRequestRoute + "{id}/";
+
+
 
 }

@@ -1,5 +1,6 @@
 using API.Models;
 using API.Services;
+using API.Services.QueryExecuters;
 using Carter;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -43,7 +44,9 @@ builder.Services.AddSingleton<IDBClientProvider, MongoClientProvider>();
 builder.Services.AddSingleton<IDatabaseProvider, DatabaseProvider>();
 builder.Services.AddSingleton<IAvailabiltyService, AvailablityService>();
 builder.Services.AddSingleton<IShiftScheduler, ShiftScheduler>();
-builder.Services.AddSingleton<IShiftRetriever, ShiftRetriever>();
+builder.Services.AddSingleton<IShiftQueryExecuter, ShiftQueryExecuter>();
+builder.Services.AddSingleton<IEmployeeQueryExecuter, EmployeeQueryExecuter>();
+builder.Services.AddSingleton<ICoverageRequestQueryExecuter, CoverageRequestQueryExecuter>();
 builder.Services.AddSingleton<IShiftTrader, ShiftTrader>();
 var app = builder.Build();
 // Configure the HTTP request pipeline.

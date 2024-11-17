@@ -9,6 +9,7 @@ namespace API.Models;
 
 public class Shift : MongoObject
 {
+    public Shift() { }
     private const double MAX_SHIFT_LENGTH_HRS = 16;// According to derron. May need updated.
     private TimeRange _shiftPeriod;
     /// <summary>
@@ -37,14 +38,25 @@ public class Shift : MongoObject
     /// </summary>
     [Length(0,70)]
     public string Location { get; set; }
+    private string _requiredRole;
     /// <summary>
     /// Role of the employee working the shift
     /// </summary>
-    public Role Role { get; set; }
+    public string RequiredRole
+    {
+        get { return _requiredRole; }
+        set
+        {
+            if (!RoleConstants.ValidRoles.Contains(value))
+            {
+                throw new InvalidDataException($"\"{value}\" is not a valid role.");
+            }
+            _requiredRole = value;
+        }
+    }
     /// <summary>
     /// Employee assigned to the shift, null or empty if none.
     /// </summary>
     [BsonIgnoreIfNull]
-    [JsonIgnore]
     public ObjectId? EmployeeID { get; set; }
 }

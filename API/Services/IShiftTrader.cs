@@ -10,6 +10,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using API.Services.QueryExecuters;
 namespace API.Services;
 
 public interface IShiftTrader
@@ -35,12 +36,12 @@ public interface IShiftTrader
     public void DenyPickup(string tradeOfferID);
 
 }
-public class ShiftTrader(ILogger<ShiftTrader> logger, IEntityRetriever entityRetriever, IShiftScheduler scheduler, IShiftRetriever shiftRetriever, IAvailabiltyService availabilityService) : IShiftTrader
+public class ShiftTrader(ILogger<ShiftTrader> logger, IEntityRetriever entityRetriever, IShiftScheduler scheduler, IShiftQueryExecuter shiftRetriever, IAvailabiltyService availabilityService) : IShiftTrader
 {
     private readonly ILogger<ShiftTrader> _logger=logger;
     private readonly IEntityRetriever _entityRetriever = entityRetriever;
     private readonly ICollectionsProvider _collectionsProvider = entityRetriever.CollectionsProvider;
-    private readonly IShiftRetriever _shiftRetriever = shiftRetriever;
+    private readonly IShiftQueryExecuter _shiftRetriever = shiftRetriever;
     private readonly IAvailabiltyService _availabilityService = availabilityService;
     private readonly IShiftScheduler _scheduler = scheduler;
 

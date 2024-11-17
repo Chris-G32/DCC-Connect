@@ -31,6 +31,7 @@ public class ShiftTradingRoutes : CarterModule
         app.MapPut(RouteConstants.ApprovePickupRoute, ApprovePickup);
         app.MapPut(RouteConstants.DenyPickupRoute, DenyPickup);
     }
+
     public async Task<IResult> ApproveTrade(string tradeOfferId, HttpRequest request)
     {
         try
@@ -79,11 +80,11 @@ public class ShiftTradingRoutes : CarterModule
         return Results.Ok("Pickup denied!");
     }
     
-    public async Task<IResult> RequestCoverage(CoverageRequest coverage, HttpRequest request)
+    public async Task<IResult> RequestCoverage(CoverageRequestBase<string> coverage, HttpRequest request)
     {
         try
         {
-            _trader.RequestCoverage(coverage);
+            _trader.RequestCoverage(new CoverageRequest(coverage));
         }
         catch (Exception e)
         {

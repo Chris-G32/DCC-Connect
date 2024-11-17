@@ -1,4 +1,5 @@
 ﻿using API.Config;
+using API.Constants;
 using API.Models;
 using API.Models.QueryOptions;
 using API.Services;
@@ -8,12 +9,14 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Text;
+using System.Text.Json;
 var fixture = new Fixture();
 var faker = new Faker();
 
 // Generate 50 mock Employee records
 var employees = new List<Employee>();
-for (int i = 0; i < 50; i++)
+for (int i = 0; i < 500; i++)
 {
     var firstName = faker.Name.FirstName();
     var lastName = faker.Name.LastName();
@@ -23,6 +26,8 @@ for (int i = 0; i < 50; i++)
         .With(e => e.FirstName, firstName)
         .With(e => e.LastName, lastName)
         .With(e => e.PhoneNumber, phoneNumber)
+        .With(e => e.EmployeeRole, faker.PickRandom(RoleConstants.ValidRoles.ToArray()))
+        .With(e => e.Id,ObjectId.GenerateNewId()) // Exclude Id property from being set
         .Create();
 
     employees.Add(employee);
@@ -36,19 +41,27 @@ var now = DateTime.UtcNow;
 var startTime = now.AddHours(12);
 var endTime = startTime.AddMonths(1);
 
-for (int i = 0; i < 50; i++)
+for (int i = 0; i < 500; i++)
 {
     // Generate random shift start and end times
     var shiftStart = faker.Date.Between(startTime, endTime);
     var shiftEnd = shiftStart.AddHours(faker.Random.Double(6, 16)); // Random length between 1 and 16 hours
 
     var timeRange = new TimeRange(shiftStart, shiftEnd); // Assuming TimeRange has a constructor that accepts start and end times
-
+    var shouldAssign=faker.Random.Float()>0.3;
+    var role = faker.PickRandom(RoleConstants.ValidRoles.ToArray());
+    ObjectId? employeeId = null;
+    if (shouldAssign)
+    {
+        var matchingRoles = employees.Where(employee => employee.EmployeeRole == role).ToList();
+        employeeId = faker.PickRandom(matchingRoles).Id;
+    }
     var shift = new Shift
     {
         ShiftPeriod = timeRange,
         Location = faker.Address.FullAddress(),
-        Role = faker.PickRandom<Role>(), // Assuming Role is an enum or class you have defined
+        RequiredRole = role, // Assuming Role is an enum or class you have defined
+        EmployeeID= employeeId,
     };
 
     shifts.Add(shift);
@@ -63,8 +76,6 @@ settings.URL = "localhost";
 settings.Database = "dcc-connect-db";
 
 var db =new MongoClient(settings.GetClientSettings()).GetDatabase(settings.Database);
-
+ 
 db.GetCollection<Shift>("shifts").InsertMany(shifts);
 db.GetCollection<Employee>("employees").InsertMany(employees);
-
-
