@@ -5,6 +5,7 @@ using System.Text;
 using API.Models;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace API.Services
 {
@@ -12,26 +13,39 @@ namespace API.Services
     public interface IJwtReaderService
     {
         // Validates the JWT token and extracts claims if valid
-        ClaimsPrincipal? ValidateToken(string token);
+        ClaimsPrincipal? ValidateToken(string token, string userEmail);
 
         // Extracts employeeID from a valid JWT token
-        ObjectId? GetEmployeeIdFromToken(string token);
+        ObjectId? GetEmployeeIdFromToken(string token, string userEmail);
     }
 
-    public class IJwtReaderService : IJwtReaderService
+    public class JwtReaderService : IJwtReaderService
     {
-        private readonly string _jwtSecret; // Secret key used to validate JWT tokens
+        private readonly IMongoCollection<User> _userCollection; // MongoDB user collection
 
-        public IJwtReaderService(string jwtSecret)
+        // Constructor that injects the MongoDB collection for users
+        public JwtReaderService(IMongoDatabase database)
         {
-            _jwtSecret = jwtSecret;
+            _userCollection = database.GetCollection<User>("Users"); // Assuming collection is named "Users"
         }
 
         // Validates the JWT token and extracts claims if valid
-        public ClaimsPrincipal? ValidateToken(string token)
+        public ClaimsPrincipal? ValidateToken(string token, string userEmail)
         {
+            // Fetch the user from the database based on the email
+            var user = _userCollection.Find(u => u.Email == userEmail).FirstOrDefault();
+
+            if (user == null)
+            {
+                // Return null if no user is found with the provided email
+                return null;
+            }
+
+            // Extract JWT secret from the user object
+            var jwtSecret = user.JWTSecret;
+
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSecret);
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
 
             var validationParameters = new TokenValidationParameters
             {
@@ -46,7 +60,17 @@ namespace API.Services
             {
                 // Validate the token and extract claims
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
-                return principal; // Return the token's claims
+
+                // Optionally, log or verify the email claim matches
+                var emailClaim = principal.FindFirst(ClaimTypes.Email)?.Value;
+
+                if (emailClaim != null && emailClaim != userEmail)
+                {
+                    // Return null if the email in the token does not match the provided userEmail
+                    return null;
+                }
+
+                return principal; // Return the token's claims if valid
             }
             catch
             {
@@ -55,9 +79,9 @@ namespace API.Services
         }
 
         // Extracts employeeID from a valid JWT token
-        public ObjectId? GetEmployeeIdFromToken(string token)
+        public ObjectId? GetEmployeeIdFromToken(string token, string userEmail)
         {
-            var principal = ValidateToken(token);
+            var principal = ValidateToken(token, userEmail);
             if (principal == null) return null; // Return null if token is invalid
 
             // Extract employeeID claim from token
