@@ -18,7 +18,7 @@ public class EmailRoutes : CarterModule
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost(RouteConstants.Send2FACodeRoute, SendTwoFactorCode);
-        app.MapPost(RouteConstants.Validate2FACodeRoute, ValidateTwoFactorCode);
+        //app.MapPost(RouteConstants.Validate2FACodeRoute, ValidateTwoFactorCode);
         app.MapPost(RouteConstants.SendPasswordResetRoute, SendPasswordResetCode);
         app.MapPost(RouteConstants.ResetPasswordRoute, ResetPassword);
     }
@@ -29,10 +29,10 @@ public class EmailRoutes : CarterModule
         return !string.IsNullOrEmpty(code) ? Results.Ok("2FA code sent!") : Results.Problem("Error sending 2FA code");
     }
 
-    public IResult ValidateTwoFactorCode(string recipientEmail, string code)
-    {
-        return _emailService.ValidateTwoFactorCode(recipientEmail, code) ? Results.Ok("2FA code is valid") : Results.Problem("Invalid 2FA code");
-    }
+    //public IResult ValidateTwoFactorCode(string recipientEmail, string code)
+    //{
+    //    return _emailService.ValidateTwoFactorCode(recipientEmail, code) ? Results.Ok("2FA code is valid") : Results.Problem("Invalid 2FA code");
+    //}
 
     public async Task<IResult> SendPasswordResetCode(string recipientEmail)
     {

@@ -25,7 +25,7 @@ namespace API.Routes
         }
 
         // Route for generating JWT token with 2FA code
-        public async Task<IResult> GenerateToken([FromBody] string userEmail, [FromQuery] string code)
+        public async Task<IResult> GenerateToken(string userEmail,string code)
         {
             // Validate the 2FA code and generate a token
             var token = _authService.AuthenticateAndGenerateToken(userEmail, code);

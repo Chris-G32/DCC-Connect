@@ -10,7 +10,7 @@ namespace API.Services
 {
     public interface IAuthService
     {
-        string? AuthenticateAndGenerateToken(string email, string code);
+        string AuthenticateAndGenerateToken(string email, string code);
     }
 
     public class AuthService : IAuthService
@@ -31,14 +31,14 @@ namespace API.Services
         /// <param name="email">The user's email address.</param>
         /// <param name="code">The 2FA code to validate.</param>
         /// <returns>A JWT token string if authentication is successful, otherwise null.</returns>
-        public string? AuthenticateAndGenerateToken(string email, string code)
+        public string AuthenticateAndGenerateToken(string email, string code)
         {
             // Fetch user from the MongoDB collection using email
             var user = _collectionsProvider.Users.Find(e => e.Email == email).FirstOrDefault();
 
             if (user == null || !_emailService.ValidateTwoFactorCode(email, code))
             {
-                return null; // Return null if user doesn't exist or 2FA code is invalid
+                throw new ArgumentException("Invalid email or 2FA code.");
             }
 
             if (string.IsNullOrEmpty(user.JWTSecret))

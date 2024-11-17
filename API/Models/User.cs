@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using MimeKit.Encodings;
@@ -10,6 +11,7 @@ namespace API.Models
     {
 
         // Email for login and 2FA
+        [EmailAddress]
         public string Email { get; set; }
 
         // Hashed password, stored for auth
@@ -17,9 +19,6 @@ namespace API.Models
 
         // Secret Key for JWT Auth token and validation, each one is uniquely generated
         public string JWTSecret { get; set; }
-
-        // Role for defining user access level
-        public Role UserRole { get; set; }
 
         // Used for JWT auth and referencing
         public ObjectId? EmployeeID { get; set; } // Made nullable

@@ -3,16 +3,21 @@ using Microsoft.AspNetCore.Mvc;
 using API.Services;
 using API.Models;
 using API.Constants;
+using System.Security.Cryptography;
+using MongoDB.Bson;
 
 namespace API.Routes
 {
     public class UserRoutes : CarterModule
     {
         private readonly IUserService _userService;
-
-        public UserRoutes(IUserService userService)
+        private readonly IEmailService _emailService;
+        private readonly IAuthService _authService;
+        public UserRoutes(IUserService userService, IEmailService emailService, IAuthService authService)
         {
             _userService = userService;
+            _emailService = emailService;
+            _authService= authService;
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -23,17 +28,27 @@ namespace API.Routes
             app.MapPut(RouteConstants.UpdateUserRoute, UpdateUser);
             app.MapDelete(RouteConstants.DeleteUserRoute, DeleteUser);
             app.MapPost(RouteConstants.LoginUserRoute, LoginUser); // Added login route
+            app.MapPost(RouteConstants.Validate2FACodeRoute, VerifyMFA); // Added MFA route
         }
 
         // Register new user
-        public async Task<IResult> RegisterUser([FromBody] User user)
+        public async Task<IResult> RegisterUser(UserRegistrationInfo userInfo)
         {
             try
             {
-                String truePassworduser = user.PasswordHash;
-                user.SetPassword(truePassworduser);
+                var user = new User();
+                user.Email = userInfo.Email;
+                ObjectId employeeId;
+                user.EmployeeID = ObjectId.TryParse(userInfo.EmployeeID, out employeeId) ? employeeId : null;
+                user.SetPassword(userInfo.Password);
+                using (var rng = RandomNumberGenerator.Create())
+                {
+                    byte[] secretBytes = new byte[32];
+                    rng.GetBytes(secretBytes);
+                    user.JWTSecret = Convert.ToBase64String(secretBytes);
+                }
                 var createdUser = await _userService.CreateUserAsync(user);
-                return Results.Ok(createdUser);
+                return Results.Ok("Successfully created user!");
             }
             catch (Exception e)
             {
@@ -102,13 +117,26 @@ namespace API.Routes
                 {
                     return Results.NotFound("Invalid password.");
                 }
-
-                return Results.Ok(true); // Return true if login is successful
+                _=_emailService.SendTwoFactorCodeAsync(email);
+                return Results.Ok("Awaiting MFA input"); // Return true if login is successful
             }
             catch (Exception e)
             {
                 return Results.Problem("Error logging in: " + e.Message);
             }
         }
+        public async Task<IResult> VerifyMFA(string email, string MFAcode)
+        {
+            try
+            {
+                var token=_authService.AuthenticateAndGenerateToken(email,MFAcode);
+                return Results.Ok(token);
+            }
+            catch (Exception e)
+            {
+                return Results.Problem("Error logging in: " + e.Message);
+            }
+        }
+
     }
 }
