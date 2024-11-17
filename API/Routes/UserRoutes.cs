@@ -22,6 +22,7 @@ namespace API.Routes
             app.MapGet(RouteConstants.GetUserRoute, GetUser);
             app.MapPut(RouteConstants.UpdateUserRoute, UpdateUser);
             app.MapDelete(RouteConstants.DeleteUserRoute, DeleteUser);
+            app.MapPost(RouteConstants.LoginUserRoute, LoginUser); // Added login route
         }
 
         // Register new user
@@ -77,6 +78,34 @@ namespace API.Routes
             catch (Exception e)
             {
                 return Results.Problem("Error deleting user: " + e.Message);
+            }
+        }
+
+        // Login user
+        public async Task<IResult> LoginUser(string email, string attemptedPassword)
+        {
+            try
+            {
+                // Retrieve user by email
+                var user = await _userService.GetUserByEmailAsync(email);
+                if (user == null)
+                {
+                    return Results.NotFound("User not found.");
+                }
+
+                // Validate the attempted password using VerifyPassword method
+                bool isPasswordValid = user.VerifyPassword(attemptedPassword);
+
+                if (!isPasswordValid)
+                {
+                    return Results.NotFound("Invalid password.");
+                }
+
+                return Results.Ok(true); // Return true if login is successful
+            }
+            catch (Exception e)
+            {
+                return Results.Problem("Error logging in: " + e.Message);
             }
         }
     }

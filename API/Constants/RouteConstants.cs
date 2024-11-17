@@ -38,5 +38,6 @@ public class RouteConstants
     public const string GetUserRoute = "/user";
     public const string UpdateUserRoute = "/user";
     public const string DeleteUserRoute = "/user";
+    public const string LoginUserRoute = "/user/login";
 
 }

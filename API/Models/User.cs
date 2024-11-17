@@ -40,8 +40,13 @@ namespace API.Models
         {
             using (var sha256 = SHA256.Create())
             {
+                // Convert the plain text password into bytes
                 var bytes = Encoding.UTF8.GetBytes(password);
+
+                // Compute the hash of the password
                 var hash = sha256.ComputeHash(bytes);
+
+                // Compare the computed hash with the stored password hash
                 return PasswordHash == Convert.ToBase64String(hash);
             }
         }
