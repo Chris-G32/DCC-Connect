@@ -45,7 +45,7 @@ namespace API.Services
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress("DCC Connect", _smtpUser));
-            message.To.Add(new MailboxAddress("", recipientEmail));
+            message.To.Add(MailboxAddress.Parse(recipientEmail));
             message.Subject = "Your Two-Factor Authentication Code";
             message.Body = new TextPart("plain")
             {
