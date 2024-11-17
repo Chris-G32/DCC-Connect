@@ -18,11 +18,11 @@ namespace API.Services
         ObjectId? GetEmployeeIdFromToken(string token);
     }
 
-    public class JwtReaderService : IJwtReaderService
+    public class IJwtReaderService : IJwtReaderService
     {
         private readonly string _jwtSecret; // Secret key used to validate JWT tokens
 
-        public JwtReaderService(string jwtSecret)
+        public IJwtReaderService(string jwtSecret)
         {
             _jwtSecret = jwtSecret;
         }

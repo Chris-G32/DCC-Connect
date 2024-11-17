@@ -19,7 +19,7 @@ namespace API.Models
         public string JWTSecret { get; set; }
 
         // Role for defining user access level
-        public Role Role { get; set; }
+        public Role UserRole { get; set; }
 
         // Used for JWT auth and referencing
         public ObjectId? EmployeeID { get; set; } // Made nullable

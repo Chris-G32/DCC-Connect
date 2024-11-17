@@ -11,12 +11,12 @@ namespace API.Services
         Task<bool> DeleteUserAsync(string email);
     }
 
-    public class UserService : IUserService
+    public class IUserService : IUserService
     {
         private readonly IMongoCollection<User> _userCollection;
 
         // Constructor to inject MongoDB collection for users
-        public UserService(IMongoDatabase database)
+        public IUserService(IMongoDatabase database)
         {
             _userCollection = database.GetCollection<User>("Users");
 

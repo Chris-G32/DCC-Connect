@@ -77,6 +77,8 @@ namespace API.Services
         }
 
         // Method to validate the 2FA code entered by the user
+
+        /* This will end up leaking data long term - FIX! *put onto database as collection* */
         public bool ValidateTwoFactorCode(string recipientEmail, string code)
         {
             // Check if the code matches the one stored, then remove it
