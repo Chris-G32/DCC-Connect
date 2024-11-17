@@ -34,7 +34,7 @@ namespace API.Services
         // Constructor to initialize SMTP credentials
         public EmailService()
         {
-            _smtpUser = "dccconnecttest@protonmail.com";
+            _smtpUser = "dccconnectnoreply@gmail.com";
             _smtpPass = "T3stP@ssword322!";
         }
 

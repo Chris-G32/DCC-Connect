@@ -32,7 +32,6 @@ namespace API.Routes
             {
                 String truePassworduser = user.PasswordHash;
                 user.SetPassword(truePassworduser);
-
                 var createdUser = await _userService.CreateUserAsync(user);
                 return Results.Ok(createdUser);
             }
