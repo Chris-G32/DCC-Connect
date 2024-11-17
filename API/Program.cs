@@ -37,10 +37,10 @@ builder.Services.AddLogging();
 builder.Services.AddCarter();
 
 /* Auth Services */
-builder.Services.AddSingleton<IAuthService, IAuthService>();
-builder.Services.AddSingleton<IJwtReaderService, IJwtReaderService>();
-builder.Services.AddSingleton<IEmailService, IEmailService>();
-builder.Services.AddSingleton<IUserService, IUserService>();
+builder.Services.AddSingleton<IAuthService, AuthService>();
+builder.Services.AddSingleton<IJwtReaderService, JwtReaderService>();
+builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddSingleton<IUserService, UserService>();
 
 /* Mongo and Shift Services */
 builder.Services.AddSingleton<IMongoDBSettingsProvider, MongoDBSettingsProvider>();

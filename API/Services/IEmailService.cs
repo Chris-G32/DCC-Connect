@@ -17,7 +17,7 @@ namespace API.Services
         Task SendEmailAsync(string recipientEmail, string subject, string body);
     }
 
-    public class IEmailService : IEmailService
+    public class EmailService : IEmailService
     {
         // SMTP server details for Gmail
         private readonly string _smtpServer = "smtp.gmail.com";
@@ -32,7 +32,7 @@ namespace API.Services
         private static readonly Dictionary<string, string> _passwordResetCodes = new Dictionary<string, string>();
 
         // Constructor to initialize SMTP credentials
-        public IEmailService(string smtpUser, string smtpPass)
+        public EmailService()
         {
             _smtpUser = "dccconnecttest@protonmail.com";
             _smtpPass = "T3stP@ssword322!";

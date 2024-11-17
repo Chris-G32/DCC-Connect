@@ -40,7 +40,7 @@ public class EmailRoutes : CarterModule
         return !string.IsNullOrEmpty(code) ? Results.Ok("Password reset code sent!") : Results.Problem("Error sending password reset code");
     }
 
-    public IResult ResetPassword(string recipientEmail, string code, User user, [FromBody] string newPassword)
+    public IResult ResetPassword(string recipientEmail, string code, User user, string newPassword)
     {
         return _emailService.ResetPassword(recipientEmail, code, user, newPassword) ? Results.Ok("Password reset successful") : Results.Problem("Invalid reset code");
     }

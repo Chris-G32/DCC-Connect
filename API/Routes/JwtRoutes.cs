@@ -28,7 +28,7 @@ namespace API.Routes
         public async Task<IResult> GenerateToken([FromBody] User user, [FromQuery] string code)
         {
             // Validate the 2FA code and generate a token
-            var token = _authService.AuthenticateAndGenerateToken(user, code);
+            var token = _authService.AuthenticateAndGenerateToken(user.Email, code);
             return token != null ? Results.Ok(token) : Results.Problem("Invalid 2FA code.");
         }
 

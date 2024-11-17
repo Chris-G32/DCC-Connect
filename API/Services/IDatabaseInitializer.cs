@@ -62,5 +62,9 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
         CreateCollectionIfNotExists(CollectionConstants.TimeOffRequestsCollection, db);
         //Create Trade Offers Collection
         CreateCollectionIfNotExists(CollectionConstants.PickupOffersCollection, db);
+
+        //Create users collection
+        CreateCollectionIfNotExists(CollectionConstants.UsersCollection, db);
+        createUniqueIndex(user => user.Email, db.GetCollection<User>(CollectionConstants.UsersCollection));
     }
 }

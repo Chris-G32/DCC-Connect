@@ -21,19 +21,19 @@ namespace API.Services
 
     public class JwtReaderService : IJwtReaderService
     {
-        private readonly IMongoCollection<User> _userCollection; // MongoDB user collection
+        private readonly ICollectionsProvider _collectionsProvider; // For accessing MongoDB collections
 
         // Constructor that injects the MongoDB collection for users
-        public JwtReaderService(IMongoDatabase database)
+        public JwtReaderService(ICollectionsProvider cp)
         {
-            _userCollection = database.GetCollection<User>("Users"); // Assuming collection is named "Users"
+            _collectionsProvider = cp; // Assuming collection is named "Users"
         }
 
         // Validates the JWT token and extracts claims if valid
         public ClaimsPrincipal? ValidateToken(string token, string userEmail)
         {
             // Fetch the user from the database based on the email
-            var user = _userCollection.Find(u => u.Email == userEmail).FirstOrDefault();
+            var user = _collectionsProvider.Users.Find(u => u.Email == userEmail).FirstOrDefault();
 
             if (user == null)
             {
