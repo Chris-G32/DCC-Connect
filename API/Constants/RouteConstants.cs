@@ -29,8 +29,7 @@ public class RouteConstants
     public static string GetShiftByIdRoute { get; } = GetShiftRoute + "{id}/";
     public static string GetOpenShiftRoute { get; } = GetShiftRoute + "open/";
     public static string GetCoverageRequestRoute { get; } = CoverageRequestRouteBase + "get/";
-    public static string GetTradesRoute { get; } = GetCoverageRequestRoute + "trades/";
-    public static string GetPickupsRoute { get; } = GetCoverageRequestRoute + "pickups/";
+    public static string GetCoverageRequestByIdRoute { get; } = GetCoverageRequestRoute + "{id}/";
 
 
 

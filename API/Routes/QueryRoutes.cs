@@ -5,6 +5,7 @@ using API.Models.QueryOptions;
 using API.Services;
 using API.Services.QueryExecuters;
 using Carter;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
@@ -37,14 +38,15 @@ public class QueryRoutes(ILogger<QueryRoutes> logger, IShiftQueryExecuter shiftR
     /// <param name="app">The endpoint route builder used to map routes.</param>
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
+        // GET routes
         app.MapGet(RouteConstants.GetShiftByIdRoute, GetShiftById);
         app.MapGet(RouteConstants.GetEmployeeByIdRoute, GetEmployeeById);
+        app.MapGet(RouteConstants.GetCoverageRequestByIdRoute, GetCoverageRequestById);
+        // POST routes
         app.MapPost(RouteConstants.GetEmployeeRoute, GetEmployees);
         app.MapPost(RouteConstants.GetShiftRoute, GetShifts);
         app.MapPost(RouteConstants.GetOpenShiftRoute, GetOpenShifts);
         app.MapPost(RouteConstants.GetCoverageRequestRoute, GetCoverageRequests);
-        //app.MapPost(RouteConstants.GetTradesRoute, );
-        //app.MapPost(RouteConstants.GetPickupsRoute, );
     }
 
     /// <summary>
@@ -98,6 +100,33 @@ public class QueryRoutes(ILogger<QueryRoutes> logger, IShiftQueryExecuter shiftR
         catch (Exception e)
         {
             _logger.LogCritical($"Unexpected exception thrown in {RouteConstants.GetEmployeeByIdRoute}: {e.Message}");
+            return Results.Problem();
+        }
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task<IResult> GetCoverageRequestById(string id, HttpRequest request)
+    {
+        try
+        {
+            return Results.Ok(_coverageRequestRetriever.GetCoverageRequest(ObjectId.Parse(id)));
+        }
+        catch (DCCApiException e)
+        {
+            return Results.Problem(e.Message);
+        }
+        catch (MongoException e)
+        {
+            _logger.LogError(e, "Error with Mongo DB occurred");
+            return MongoProblem();
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical($"Unexpected exception thrown in {RouteConstants.GetCoverageRequestByIdRoute}: {e.Message}");
             return Results.Problem();
         }
     }
