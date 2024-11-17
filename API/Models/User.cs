@@ -21,6 +21,9 @@ namespace API.Models
         // Role for defining user access level
         public Role UserRole { get; set; }
 
+        // Temp Literal String
+        public string LiteralPassword { get; set; }
+
         // Used for JWT auth and referencing
         public ObjectId? EmployeeID { get; set; } // Made nullable
 
