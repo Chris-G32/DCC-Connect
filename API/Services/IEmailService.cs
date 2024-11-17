@@ -35,7 +35,7 @@ namespace API.Services
         public EmailService()
         {
             _smtpUser = "dccconnectnoreply@gmail.com";
-            _smtpPass = "T3stP@ssword322!";
+            _smtpPass = "onrg uzke kjrw kjfa";
         }
 
         // Method to send a 2FA code to the user's email
