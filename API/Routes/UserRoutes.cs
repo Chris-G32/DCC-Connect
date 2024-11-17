@@ -130,7 +130,8 @@ namespace API.Routes
             try
             {
                 var token=_authService.AuthenticateAndGenerateToken(email,MFAcode);
-                return Results.Ok(token);
+                var user =await _userService.GetUserByEmailAsync(email);
+                return Results.Ok(new Tuple<string,string>(token,user.Id.ToString()));
             }
             catch (Exception e)
             {

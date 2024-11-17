@@ -20,8 +20,8 @@ namespace API.Routes
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost(RouteConstants.GenerateTokenRoute, GenerateToken);
-            app.MapPost(RouteConstants.ValidateTokenRoute, ValidateToken);
+            //app.MapPost(RouteConstants.GenerateTokenRoute, GenerateToken);
+            //app.MapPost(RouteConstants.ValidateTokenRoute, ValidateToken);
         }
 
         // Route for generating JWT token with 2FA code

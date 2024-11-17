@@ -17,7 +17,7 @@ public class EmailRoutes : CarterModule
 
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost(RouteConstants.Send2FACodeRoute, SendTwoFactorCode);
+        //app.MapPost(RouteConstants.Send2FACodeRoute, SendTwoFactorCode);
         //app.MapPost(RouteConstants.Validate2FACodeRoute, ValidateTwoFactorCode);
         app.MapPost(RouteConstants.SendPasswordResetRoute, SendPasswordResetCode);
         app.MapPost(RouteConstants.ResetPasswordRoute, ResetPassword);
