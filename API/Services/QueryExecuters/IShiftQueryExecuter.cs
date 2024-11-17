@@ -25,6 +25,11 @@ public class ShiftQueryExecuter(ICollectionsProvider provider) : IShiftQueryExec
         {
             filter = filter & builder.Gte(shift => shift.ShiftPeriod.Start, options.TimeFilter.Start) & builder.Lte(shift => shift.ShiftPeriod.Start, options.TimeFilter.End);
         }
+        else
+        {
+            filter = filter & builder.Gte(shift => shift.ShiftPeriod.Start, DateTime.Now);
+
+        }
         return filter;
 
     }
@@ -43,7 +48,6 @@ public class ShiftQueryExecuter(ICollectionsProvider provider) : IShiftQueryExec
     {
 
         return GetOpenShifts(options).Select(shift => shift.Id ?? throw new Exception("ID should never be null when reading from database.")).ToList();
-
     }
     public List<Shift> GetOpenShifts(ShiftQueryOptions options)
     {
