@@ -5,6 +5,7 @@ using API.Models;
 using API.Constants;
 using System.Security.Cryptography;
 using MongoDB.Bson;
+using API.Models.SignIn;
 
 namespace API.Routes
 {
@@ -98,26 +99,31 @@ namespace API.Routes
             }
         }
 
-        // Login user
-        public async Task<IResult> LoginUser(string email, string attemptedPassword)
+        /// <summary>
+        /// Attempts to sign in a user with the provided credentials.
+        /// </summary>
+        /// <param name="credentials">The users email and password</param>
+        /// <param name="request"></param>
+        /// <returns> Problem when invalid credentials, success when valid</returns>
+        public async Task<IResult> LoginUser(LoginRequest credentials,HttpRequest request)
         {
             try
             {
                 // Retrieve user by email
-                var user = await _userService.GetUserByEmailAsync(email);
+                var user = await _userService.GetUserByEmailAsync(credentials.Email);
                 if (user == null)
                 {
                     return Results.NotFound("User not found.");
                 }
-
+                string password = credentials.Credential;
                 // Validate the attempted password using VerifyPassword method
-                bool isPasswordValid = user.VerifyPassword(attemptedPassword);
+                bool isPasswordValid = user.VerifyPassword(password);
 
                 if (!isPasswordValid)
                 {
                     return Results.NotFound("Invalid password.");
                 }
-                _=_emailService.SendTwoFactorCodeAsync(email);
+                _=_emailService.SendTwoFactorCodeAsync(credentials.Email);
                 return Results.Ok("Awaiting MFA input"); // Return true if login is successful
             }
             catch (Exception e)
@@ -125,12 +131,18 @@ namespace API.Routes
                 return Results.Problem("Error logging in: " + e.Message);
             }
         }
-        public async Task<IResult> VerifyMFA(string email, string MFAcode)
+        /// <summary>
+        /// Validates an MFA code with an email and generates a JWT token if successful
+        /// </summary>
+        /// <param name="credentials"> The email and MFA code sent.</param>
+        /// <returns></returns>
+        public async Task<IResult> VerifyMFA(LoginRequest credentials)
         {
             try
             {
-                var token=_authService.AuthenticateAndGenerateToken(email,MFAcode);
-                var user =await _userService.GetUserByEmailAsync(email);
+                string MFAToken = credentials.Credential;
+                var token=_authService.AuthenticateAndGenerateToken(credentials.Email, MFAToken);
+                var user =await _userService.GetUserByEmailAsync(credentials.Email);
                 return Results.Ok(new Tuple<string,string>(token,user.Id.ToString()));
             }
             catch (Exception e)

@@ -34,6 +34,14 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", builder => builder
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .SetIsOriginAllowed((host) => true)
+        .AllowCredentials());
+});
 builder.Services.AddLogging();
 builder.Services.AddCarter();
 
@@ -63,6 +71,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors("CorsPolicy"); 
 }
 
 app.UseHttpsRedirection();
