@@ -32,5 +32,23 @@ public class RouteConstants
     public static string GetCoverageRequestByIdRoute { get; } = GetCoverageRequestRoute + "{id}/";
 
 
+    /* Auth Constants */
+    public const string GenerateTokenRoute = "/auth/token";
+    public const string ValidateTokenRoute = "/auth/validate";
+
+    /* Email Constants */
+    public const string Send2FACodeRoute = "/email/send2fa";
+    public const string Validate2FACodeRoute = "/email/validate2fa";
+    public const string SendPasswordResetRoute = "/email/sendpasswordreset";
+    public const string ResetPasswordRoute = "/email/resetpassword";
+
+    /* User Constants */
+    public const string CreateUserRoute = "/user/create";
+    public const string UpdateUserPasswordRoute = "/user/updatepassword";
+    public const string RegisterUserRoute = "/user/register";
+    public const string GetUserRoute = "/user";
+    public const string UpdateUserRoute = "/user";
+    public const string DeleteUserRoute = "/user";
+    public const string LoginUserRoute = "/user/login";
 
 }

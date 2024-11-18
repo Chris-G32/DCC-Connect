@@ -36,6 +36,14 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddLogging();
 builder.Services.AddCarter();
+
+/* Auth Services */
+builder.Services.AddSingleton<IAuthService, AuthService>();
+builder.Services.AddSingleton<IJwtReaderService, JwtReaderService>();
+builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddSingleton<IUserService, UserService>();
+
+/* Mongo and Shift Services */
 builder.Services.AddSingleton<IMongoDBSettingsProvider, MongoDBSettingsProvider>();
 builder.Services.AddSingleton<IDatabaseInitializer, DatabaseInitializer>();
 builder.Services.AddSingleton<ICollectionsProvider, CollectionsProvider>();
@@ -49,6 +57,7 @@ builder.Services.AddSingleton<IEmployeeQueryExecuter, EmployeeQueryExecuter>();
 builder.Services.AddSingleton<ICoverageRequestQueryExecuter, CoverageRequestQueryExecuter>();
 builder.Services.AddSingleton<IShiftTrader, ShiftTrader>();
 var app = builder.Build();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

@@ -9,4 +9,5 @@ public class CollectionConstants
     public static string PickupOffersCollection { get; } = "shifts.coverage.pickups";
     public static string TimeOffRequestsCollection { get; } = "timeoff";
     public static string OpenShiftsView { get; } = "openshifts";
+    public static string UsersCollection { get; } = "user";
 }

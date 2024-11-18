@@ -7,6 +7,7 @@ namespace API.Services;
 public interface ICollectionsProvider
 {
     public IMongoCollection<Employee> Employees { get; }
+    public IMongoCollection<User> Users { get; }
     public IMongoCollection<Shift> Shifts { get; }
     public IMongoCollection<CoverageRequest> CoverageRequests { get; }
     public IMongoCollection<TradeOffer> TradeOffers { get; }
@@ -19,6 +20,8 @@ public class CollectionsProvider(IDatabaseProvider db) : ICollectionsProvider
 {
     IDatabaseProvider _db = db;
     public IMongoCollection<Employee> Employees => _db.Database.GetCollection<Employee>(CollectionConstants.EmployeesCollection);
+
+    public IMongoCollection<User> Users => _db.Database.GetCollection<User>(CollectionConstants.UsersCollection);
 
     public IMongoCollection<Shift> Shifts => _db.Database.GetCollection<Shift>(CollectionConstants.ShiftsCollection);
 
