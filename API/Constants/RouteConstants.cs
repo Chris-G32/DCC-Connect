@@ -31,7 +31,6 @@ public class RouteConstants
     public static string GetCoverageRequestRoute { get; } = CoverageRequestRouteBase + "get/";
     public static string GetCoverageRequestByIdRoute { get; } = GetCoverageRequestRoute + "{id}/";
 
-
     /* Auth Constants */
     public const string GenerateTokenRoute = "/auth/token";
     public const string ValidateTokenRoute = "/auth/validate";
@@ -50,5 +49,7 @@ public class RouteConstants
     public const string UpdateUserRoute = "/user";
     public const string DeleteUserRoute = "/user";
     public const string LoginUserRoute = "/user/login";
+    public const string UpdateJWTTokenRoute = "/user/updatejwt";  // New route to update JWT token
+
 
 }

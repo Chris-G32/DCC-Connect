@@ -4,36 +4,43 @@ using API.Services.QueryExecuters;
 using Carter;
 using MongoDB.Bson;
 using MongoDB.Driver;
+
 var builder = WebApplication.CreateBuilder(args);
+
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "API", Version = "v1" });
 
-    // Add security definition
-    c.AddSecurityDefinition("basic", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    // Add JWT Bearer authentication definition
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "basic",
-        Description = "Enter your credentials to access the Swagger UI"
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter 'Bearer' followed by a space and your JWT token. Example: 'Bearer eyJhbGciOiJIUzI1...'"
     });
 
     // Add security requirement
     c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
-        { new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
             {
                 Reference = new Microsoft.OpenApi.Models.OpenApiReference
                 {
                     Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "basic"
+                    Id = "Bearer"
                 }
-            }, new string[] { }
+            },
+            Array.Empty<string>()
         }
     });
 });
+
 builder.Services.AddLogging();
 builder.Services.AddCarter();
 
@@ -56,6 +63,7 @@ builder.Services.AddSingleton<IShiftQueryExecuter, ShiftQueryExecuter>();
 builder.Services.AddSingleton<IEmployeeQueryExecuter, EmployeeQueryExecuter>();
 builder.Services.AddSingleton<ICoverageRequestQueryExecuter, CoverageRequestQueryExecuter>();
 builder.Services.AddSingleton<IShiftTrader, ShiftTrader>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

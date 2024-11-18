@@ -8,6 +8,8 @@ namespace API.Services
         Task<User> GetUserByEmailAsync(string email);
         Task<User> CreateUserAsync(User user);
         Task<User> UpdateUserAsync(string email, User updatedUser);
+        Task<User> UpdateJWTTokenAsync(string email, string jwtToken);  // Method to update JWT token
+        Task<User> GetUserByJWTTokenAsync(string jwtToken); // New method to get user by JWT token
         Task<bool> DeleteUserAsync(string email);
     }
 
@@ -19,8 +21,6 @@ namespace API.Services
         public UserService(ICollectionsProvider cp)
         {
             _collectionsProvider = cp;
-
-
         }
 
         // Get a user by email
@@ -52,6 +52,24 @@ namespace API.Services
                 new ReplaceOptions { IsUpsert = true });
 
             return result.IsAcknowledged ? updatedUser : null;
+        }
+
+        // Update the JWT token for a user
+        public async Task<User> UpdateJWTTokenAsync(string email, string jwtToken)
+        {
+            var updateDefinition = Builders<User>.Update.Set(u => u.JWTToken, jwtToken);
+
+            var result = await _collectionsProvider.Users.UpdateOneAsync(
+                u => u.Email == email,
+                updateDefinition);
+
+            return result.MatchedCount > 0 ? await GetUserByEmailAsync(email) : null;
+        }
+
+        // Get the user by JWT token
+        public async Task<User> GetUserByJWTTokenAsync(string jwtToken)
+        {
+            return await _collectionsProvider.Users.Find(u => u.JWTToken == jwtToken).FirstOrDefaultAsync();
         }
 
         // Delete a user by email
