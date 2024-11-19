@@ -79,10 +79,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.Logger.LogDebug("In Development environment");
-    app.UseSwagger();
-    app.UseSwaggerUI();
+
 }
-    app.UseCors("CorsPolicy"); 
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
 app.MapCarter();
