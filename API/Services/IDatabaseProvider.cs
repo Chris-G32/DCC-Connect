@@ -1,6 +1,5 @@
 ﻿using API.Config;
 using API.Constants;
-using API.Database;
 using API.Models;
 using MongoDB.Driver;
 
