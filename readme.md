@@ -29,6 +29,6 @@ On Linux, you can use the following command to deploy the application: when isnu
 Build the container *(__Note__: the . is important at the end)*: 
 ```docker build -t dcc-connect-api -f API/Dockerfile .``` 
 Run server in detached mode using the following command:
-```docker run -d -p 80:8080 -p 443:8081 dcc-connect-api```
+```docker run --name <your-name> -d -p 80:8080 -p 443:8081 dcc-connect-api```
 Allow http and https traffic to the server using the following command (on digital ocean):
 ```sudo ufw allow 80 && sudo ufw allow 443```
