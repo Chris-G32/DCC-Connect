@@ -78,10 +78,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.Logger.LogDebug("In Development environment");
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("CorsPolicy"); 
 }
+    app.UseCors("CorsPolicy"); 
 
 app.UseHttpsRedirection();
 app.MapCarter();
