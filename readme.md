@@ -23,3 +23,8 @@ if you are running both of the containers on the same machine use the following 
 - http/https mode, MongoDB.URL should be localhost.
 When running in 
 When running in Docker, it should be host.docker.internal.
+
+### Deploying
+On Linux, you can use the following command to deploy the application: when isnude the DCC-Connect repo.
+```docker build -t dcc-connect-api -f API/Dockerfile .```
+Note: the . is important at the end.
