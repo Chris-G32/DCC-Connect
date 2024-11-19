@@ -9,7 +9,6 @@ namespace API.Models
 {
     public class User : MongoObject
     {
-
         // Email for login and 2FA
         [EmailAddress]
         public string Email { get; set; }
@@ -22,6 +21,9 @@ namespace API.Models
 
         // Used for JWT auth and referencing
         public ObjectId? EmployeeID { get; set; } // Made nullable
+
+        // Active JWT token for this user (stores the token)
+        public string JWTToken { get; set; }  // New property to store active JWT token
 
         // Hashes the password and stores the hash
         public void SetPassword(string password)
@@ -48,6 +50,18 @@ namespace API.Models
                 // Compare the computed hash with the stored password hash
                 return PasswordHash == Convert.ToBase64String(hash);
             }
+        }
+
+        // Sets the JWT token for the user (after successful login or token refresh)
+        public void SetJWTToken(string token)
+        {
+            JWTToken = token;
+        }
+
+        // Clears the JWT token (useful for logout)
+        public void ClearJWTToken()
+        {
+            JWTToken = null;
         }
     }
 }

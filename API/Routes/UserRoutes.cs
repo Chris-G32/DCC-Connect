@@ -14,11 +14,12 @@ namespace API.Routes
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
         private readonly IAuthService _authService;
+
         public UserRoutes(IUserService userService, IEmailService emailService, IAuthService authService)
         {
             _userService = userService;
             _emailService = emailService;
-            _authService= authService;
+            _authService = authService;
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -28,8 +29,8 @@ namespace API.Routes
             app.MapGet(RouteConstants.GetUserRoute, GetUser);
             app.MapPut(RouteConstants.UpdateUserRoute, UpdateUser);
             app.MapDelete(RouteConstants.DeleteUserRoute, DeleteUser);
-            app.MapPost(RouteConstants.LoginUserRoute, LoginUser); // Added login route
-            app.MapPost(RouteConstants.Validate2FACodeRoute, VerifyMFA); // Added MFA route
+            app.MapPost(RouteConstants.LoginUserRoute, LoginUser); // Login route
+            app.MapPost(RouteConstants.Validate2FACodeRoute, VerifyMFA); // MFA route
         }
 
         // Register new user
@@ -37,17 +38,21 @@ namespace API.Routes
         {
             try
             {
-                var user = new User();
-                user.Email = userInfo.Email;
-                ObjectId employeeId;
-                user.EmployeeID = ObjectId.TryParse(userInfo.EmployeeID, out employeeId) ? employeeId : null;
+                var user = new User
+                {
+                    Email = userInfo.Email,
+                    EmployeeID = ObjectId.TryParse(userInfo.EmployeeID, out ObjectId employeeId) ? employeeId : null
+                };
                 user.SetPassword(userInfo.Password);
+
+                // Generate a unique JWT Secret
                 using (var rng = RandomNumberGenerator.Create())
                 {
                     byte[] secretBytes = new byte[32];
                     rng.GetBytes(secretBytes);
                     user.JWTSecret = Convert.ToBase64String(secretBytes);
                 }
+
                 var createdUser = await _userService.CreateUserAsync(user);
                 return Results.Ok("Successfully created user!");
             }
@@ -123,6 +128,7 @@ namespace API.Routes
                 {
                     return Results.NotFound("Invalid password.");
                 }
+
                 _=_emailService.SendTwoFactorCodeAsync(credentials.Email);
                 return Results.Ok("Awaiting MFA input"); // Return true if login is successful
             }
@@ -143,13 +149,13 @@ namespace API.Routes
                 string MFAToken = credentials.Credential;
                 var token=_authService.AuthenticateAndGenerateToken(credentials.Email, MFAToken);
                 var user =await _userService.GetUserByEmailAsync(credentials.Email);
-                return Results.Ok(new Tuple<string,string>(token,user.Id.ToString()));
+                return Results.Ok(new { Token = token, UserId = user?.Id.ToString() });
+
             }
             catch (Exception e)
             {
-                return Results.Problem("Error logging in: " + e.Message);
+                return Results.Problem("Error verifying MFA: " + e.Message);
             }
         }
-
     }
 }

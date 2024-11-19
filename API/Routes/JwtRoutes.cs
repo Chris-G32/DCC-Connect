@@ -6,21 +6,26 @@ using API.Constants;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Ocsp;
+using Amazon.Runtime.Internal;
 
 namespace API.Routes
 {
     public class JwtRoutes : CarterModule
     {
         private readonly IAuthService _authService;
+        private readonly ILogger<JwtRoutes> _logger;
 
-        public JwtRoutes(IAuthService authService)
+        public JwtRoutes(IAuthService authService, ILogger<JwtRoutes> logger)
         {
             _authService = authService;
+            _logger = logger;
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            //app.MapPost(RouteConstants.GenerateTokenRoute, GenerateToken);
+            app.MapPost("TestJWT", (HttpRequest req) => { _logger.LogInformation(req.Headers.Authorization); });
             //app.MapPost(RouteConstants.ValidateTokenRoute, ValidateToken);
         }
 
@@ -38,6 +43,7 @@ namespace API.Routes
             // Validate the provided token using the secret
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(secret);
+
 
             try
             {
