@@ -14,12 +14,14 @@ namespace API.Routes
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
         private readonly IAuthService _authService;
+        private readonly IUserRegisterService _userRegister;
 
-        public UserRoutes(IUserService userService, IEmailService emailService, IAuthService authService)
+        public UserRoutes(IUserService userService, IEmailService emailService, IAuthService authService,IUserRegisterService userRegister)
         {
             _userService = userService;
             _emailService = emailService;
             _authService = authService;
+            _userRegister = userRegister;
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -38,22 +40,7 @@ namespace API.Routes
         {
             try
             {
-                var user = new User
-                {
-                    Email = userInfo.Email,
-                    EmployeeID = ObjectId.TryParse(userInfo.EmployeeID, out ObjectId employeeId) ? employeeId : null
-                };
-                user.SetPassword(userInfo.Password);
-
-                // Generate a unique JWT Secret
-                using (var rng = RandomNumberGenerator.Create())
-                {
-                    byte[] secretBytes = new byte[32];
-                    rng.GetBytes(secretBytes);
-                    user.JWTSecret = Convert.ToBase64String(secretBytes);
-                }
-
-                var createdUser = await _userService.CreateUserAsync(user);
+                var user = _userRegister.RegisterUser(userInfo);
                 return Results.Ok("Successfully created user!");
             }
             catch (Exception e)
