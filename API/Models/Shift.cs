@@ -58,5 +58,6 @@ public class Shift : MongoObject
     /// Employee assigned to the shift, null or empty if none.
     /// </summary>
     [BsonIgnoreIfNull]
+    [JsonConverter(typeof(ObjectIdConverter))]
     public ObjectId? EmployeeID { get; set; }
 }
