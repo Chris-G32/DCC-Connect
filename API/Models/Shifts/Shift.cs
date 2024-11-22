@@ -5,11 +5,16 @@ using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace API.Models;
-
+namespace API.Models.Shifts;
 public class Shift : MongoObject
 {
     public Shift() { }
+    public Shift(ShiftCreationInfo creationInfo)
+    {
+        ShiftPeriod = creationInfo.ShiftPeriod;
+        Location = creationInfo.Location;
+        RequiredRole = creationInfo.RequiredRole;
+    }
     private const double MAX_SHIFT_LENGTH_HRS = 16;// According to derron. May need updated.
     private TimeRange _shiftPeriod;
     /// <summary>
@@ -36,7 +41,7 @@ public class Shift : MongoObject
     /// <summary>
     /// Address of the home where the shift is taking place
     /// </summary>
-    [Length(0,70)]
+    [Length(0, 70)]
     public string Location { get; set; }
     private string _requiredRole;
     /// <summary>

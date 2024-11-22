@@ -2,7 +2,7 @@
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
-namespace API.Models;
+namespace API.Models.Shifts;
 
 public class ShiftAssignment
 {
@@ -10,9 +10,9 @@ public class ShiftAssignment
     {
 
     }
-    public ShiftAssignment(string shiftId,string employeeId)
+    public ShiftAssignment(string shiftId, string employeeId)
     {
-        ShiftIDString= shiftId;
+        ShiftIDString = shiftId;
         EmployeeIDString = employeeId;
     }
     public ShiftAssignment(ObjectId shiftId, ObjectId employeeId)
@@ -25,7 +25,7 @@ public class ShiftAssignment
     [JsonIgnore]
     public ObjectId? EmployeeID { get; internal set; }
     [BsonIgnore]
-    public string ShiftIDString { get{ return ShiftID.ToString(); } set { ShiftID = ObjectId.Parse(value); } }
+    public string ShiftIDString { get { return ShiftID.ToString(); } set { ShiftID = ObjectId.Parse(value); } }
     [BsonIgnore]
     public string? EmployeeIDString { get { return EmployeeID.ToString(); } set { EmployeeID = ObjectId.Parse(value); } }
 }

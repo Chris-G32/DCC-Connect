@@ -1,5 +1,6 @@
 ﻿using API.Errors;
 using API.Models;
+using API.Models.Shifts;
 using API.Utils;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;

@@ -1,7 +1,7 @@
 ﻿using API.Constants;
 using API.Errors;
-using API.Models;
 using API.Models.QueryOptions;
+using API.Models.Shifts;
 using API.Services;
 using API.Services.QueryExecuters;
 using Carter;
@@ -99,9 +99,9 @@ public class ShiftSchedulingRoutes : CarterModule
     /// <param name="shift"> The shifts information. Any id parameter provided here will be ignored and set to null.</param>
     /// <param name="request"></param>
     /// <returns></returns>
-    public async Task<IResult> CreateShift(Shift shift, HttpRequest request)
+    public async Task<IResult> CreateShift(ShiftCreationInfo shift, HttpRequest request)
     {
-        shift.Id = null;
+            
         try
         {
             _shiftScheduler.CreateShift(shift);

@@ -1,4 +1,4 @@
-﻿using API.Models;
+﻿using API.Models.Shifts;
 
 namespace API.Factories;
 

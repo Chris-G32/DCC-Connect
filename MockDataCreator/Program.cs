@@ -2,6 +2,7 @@
 using API.Constants;
 using API.Models;
 using API.Models.QueryOptions;
+using API.Models.Shifts;
 using API.Services;
 using AutoFixture;
 using Bogus;

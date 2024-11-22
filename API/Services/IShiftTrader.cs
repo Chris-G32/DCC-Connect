@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using API.Services.QueryExecuters;
+using API.Models.Shifts;
 namespace API.Services;
 
 public interface IShiftTrader
