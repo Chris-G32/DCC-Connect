@@ -1,12 +1,20 @@
 ﻿using MongoDB.Driver;
 using API.Models;
+using MongoDB.Bson;
+using API.Errors;
+using API.Constants;
 
 namespace API.Services
 {
     public interface IUserService
     {
         Task<User> GetUserByEmailAsync(string email);
+        User GetUserByEmail(string email);
+
         Task<User> CreateUserAsync(User user);
+        public User GetUserById(ObjectId id);
+        public string GetUserRole(ObjectId id);
+        public string GetUserRole(string email);
         Task<User> UpdateUserAsync(string email, User updatedUser);
         Task<User> UpdateJWTTokenAsync(string email, string jwtToken);  // Method to update JWT token
         Task<User> GetUserByJWTTokenAsync(string jwtToken); // New method to get user by JWT token
@@ -24,9 +32,18 @@ namespace API.Services
         }
 
         // Get a user by email
+        public User GetUserByEmail(string email)
+        {
+            return _collectionsProvider.Users.Find(u => u.Email == email).FirstOrDefault();
+        }
         public async Task<User> GetUserByEmailAsync(string email)
         {
             return await _collectionsProvider.Users.Find(u => u.Email == email).FirstOrDefaultAsync();
+        }
+        public User GetUserById(ObjectId id)
+        {
+            var result = _collectionsProvider.Users.Find(u => u.Id == id).FirstOrDefault() ?? throw new EntityDoesNotExistException(id.ToString(), CollectionConstants.UsersCollection);
+            return _collectionsProvider.Users.Find(u => u.Id == id).FirstOrDefault();
         }
 
         // Create a new user
@@ -77,6 +94,18 @@ namespace API.Services
         {
             var result = await _collectionsProvider.Users.DeleteOneAsync(u => u.Email == email);
             return result.DeletedCount > 0;
+        }
+
+        public string GetUserRole(ObjectId id)
+        {
+            var employeeId = GetUserById(id).EmployeeID;
+            return _collectionsProvider.Employees.Find(e=>e.Id== employeeId).FirstOrDefault().EmployeeRole;
+        }
+
+        public string GetUserRole(string email)
+        {
+            var employeeId = GetUserByEmail(email).EmployeeID;
+            return _collectionsProvider.Employees.Find(e => e.Id == employeeId).FirstOrDefault().EmployeeRole;
         }
     }
 }

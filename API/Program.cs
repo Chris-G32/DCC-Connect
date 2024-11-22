@@ -58,6 +58,7 @@ builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddSingleton<IJwtReaderService, JwtReaderService>();
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddSingleton<IUserRegisterService, UserRegisterService>();
 
 /* Mongo and Shift Services */
 builder.Services.AddSingleton<IMongoDBSettingsProvider, MongoDBSettingsProvider>();

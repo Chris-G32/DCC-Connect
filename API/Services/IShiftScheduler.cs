@@ -1,7 +1,7 @@
 ﻿using API.Constants;
 using API.Constants.Errors;
 using API.Errors;
-using API.Models;
+using API.Models.Shifts;
 using API.Utils;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -13,7 +13,7 @@ public interface IShiftScheduler
 {
     void AssignShift(ShiftAssignment assignment);
     void UnassignShift(ObjectId shiftID);
-    void CreateShift(Shift shift);
+    void CreateShift(ShiftCreationInfo shift);
     void DeleteShift(ObjectId shiftID);
 }
 public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever entityRetriever, IAvailabiltyService availabiltyService) : IShiftScheduler
@@ -54,21 +54,22 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
         }
         //TODO: Notify employee
     }
-    public void CreateShift(Shift shift)
+    public void CreateShift(ShiftCreationInfo shiftCreation)
     {
+        
         //TODO: Check the location exists.
-        if (shift.ShiftPeriod.Start.ToUniversalTime() < DateTime.Now.ToUniversalTime())
+        if (shiftCreation.ShiftPeriod.Start.ToUniversalTime() < DateTime.Now.ToUniversalTime())
         {
-            throw new Exception("");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.CannotCreateShiftInThePastError);
         }
-        _collectionsProvider.Shifts.InsertOne(shift);
+        _collectionsProvider.Shifts.InsertOne(new Shift(shiftCreation));
     }
     public void DeleteShift(ObjectId shiftID)
     {
         var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
         if (shift.EmployeeID != null)
         {
-            throw new DCCApiException(ShiftSchedulerErrorConstants.CannotCreateShiftInThePastError);
+            throw new DCCApiException(ShiftSchedulerErrorConstants.UnassignShiftBeforeDeleteError);
         }
         _collectionsProvider.Shifts.FindOneAndDelete(shift => shift.Id == shiftID);
     }

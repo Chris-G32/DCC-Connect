@@ -23,5 +23,6 @@ public abstract class MongoObject
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     [BsonIgnoreIfNull]
+    [JsonConverter(typeof(ObjectIdConverter))]
     public ObjectId? Id { get; set; }
 }

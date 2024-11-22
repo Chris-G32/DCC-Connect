@@ -32,24 +32,26 @@ public class RouteConstants
     public static string GetCoverageRequestByIdRoute { get; } = GetCoverageRequestRoute + "{id}/";
 
     /* Auth Constants */
-    public const string GenerateTokenRoute = "/auth/token";
-    public const string ValidateTokenRoute = "/auth/validate";
+    public static string GenerateTokenRoute { get; } = "/auth/token";
+    public static string ValidateTokenRoute { get; } = "/auth/validate";
 
     /* Email Constants */
-    public const string Send2FACodeRoute = "/email/send2fa";
-    public const string Validate2FACodeRoute = "/email/validate2fa";
-    public const string SendPasswordResetRoute = "/email/sendpasswordreset";
-    public const string ResetPasswordRoute = "/email/resetpassword";
+    public static string Send2FACodeRoute { get; } = "/email/send2fa";
+    public static string Validate2FACodeRoute { get; } = "/email/validate2fa";
+    public static string SendPasswordResetRoute { get; } = "/email/sendpasswordreset";
+    public static string ResetPasswordRoute { get; } = "/email/resetpassword";
 
     /* User Constants */
-    public const string CreateUserRoute = "/user/create";
-    public const string UpdateUserPasswordRoute = "/user/updatepassword";
-    public const string RegisterUserRoute = "/user/register";
-    public const string GetUserRoute = "/user";
-    public const string UpdateUserRoute = "/user";
-    public const string DeleteUserRoute = "/user";
-    public const string LoginUserRoute = "/user/login";
-    public const string UpdateJWTTokenRoute = "/user/updatejwt";  // New route to update JWT token
+    public static string UserRouteBase { get; } = "user/";
+    public static string CreateUserRoute { get; } = UserRouteBase + "create/";
+    public static string UpdateUserPasswordRoute { get; } = UserRouteBase + "updatepassword/";
+    public static string RegisterUserRoute { get; } = UserRouteBase + "register/";
+    public static string GetUserRoute { get; } = UserRouteBase;
+    public static string GetUserRoleRoute = GetUserRoute + "role/{emailOrId}";
+    public static string UpdateUserRoute { get; } = UserRouteBase;
+    public static string DeleteUserRoute { get; } = UserRouteBase;
+    public static string LoginUserRoute { get; } = UserRouteBase + "login/";
+    public static string UpdateJWTTokenRoute { get; } = UserRouteBase + "updatejwt/";  // New route to update JWT token
 
 
 }

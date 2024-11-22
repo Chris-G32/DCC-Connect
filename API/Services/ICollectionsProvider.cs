@@ -1,5 +1,6 @@
 ﻿using API.Constants;
 using API.Models;
+using API.Models.Shifts;
 using MongoDB.Driver;
 
 namespace API.Services;

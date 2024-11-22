@@ -6,6 +6,7 @@ using API.Constants;
 using System.Security.Cryptography;
 using MongoDB.Bson;
 using API.Models.SignIn;
+using API.Errors;
 
 namespace API.Routes
 {
@@ -14,12 +15,15 @@ namespace API.Routes
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
         private readonly IAuthService _authService;
-
-        public UserRoutes(IUserService userService, IEmailService emailService, IAuthService authService)
+        private readonly IUserRegisterService _userRegister;
+        private readonly ILogger<UserRoutes> _logger;
+        public UserRoutes(ILogger<UserRoutes> logger,IUserService userService, IEmailService emailService, IAuthService authService,IUserRegisterService userRegister)
         {
             _userService = userService;
             _emailService = emailService;
             _authService = authService;
+            _userRegister = userRegister;
+            _logger = logger;
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -27,34 +31,50 @@ namespace API.Routes
             // User CRUD routes
             app.MapPost(RouteConstants.RegisterUserRoute, RegisterUser);
             app.MapGet(RouteConstants.GetUserRoute, GetUser);
+            app.MapGet(RouteConstants.GetUserRoleRoute, GetUserRole);
             app.MapPut(RouteConstants.UpdateUserRoute, UpdateUser);
             app.MapDelete(RouteConstants.DeleteUserRoute, DeleteUser);
             app.MapPost(RouteConstants.LoginUserRoute, LoginUser); // Login route
             app.MapPost(RouteConstants.Validate2FACodeRoute, VerifyMFA); // MFA route
         }
 
+        public async Task<IResult> GetUserRole (string emailOrId,HttpRequest request)
+        {
+            
+            try
+            {
+                string role;
+                if (ObjectId.TryParse(emailOrId, out ObjectId id))
+                {
+                    return Results.Ok(_userService.GetUserRole(id));
+                }
+                else
+                {
+                    return Results.Ok(_userService.GetUserRole(emailOrId));
+                }
+                
+            }
+            catch (DCCApiException e)
+            {
+                return Results.Problem(e.Message);
+            }
+            catch (Exception e)
+            {
+
+                return Results.Problem("Error registering user: " + e.Message);
+            }
+        }
         // Register new user
         public async Task<IResult> RegisterUser(UserRegistrationInfo userInfo)
         {
             try
             {
-                var user = new User
-                {
-                    Email = userInfo.Email,
-                    EmployeeID = ObjectId.TryParse(userInfo.EmployeeID, out ObjectId employeeId) ? employeeId : null
-                };
-                user.SetPassword(userInfo.Password);
-
-                // Generate a unique JWT Secret
-                using (var rng = RandomNumberGenerator.Create())
-                {
-                    byte[] secretBytes = new byte[32];
-                    rng.GetBytes(secretBytes);
-                    user.JWTSecret = Convert.ToBase64String(secretBytes);
-                }
-
-                var createdUser = await _userService.CreateUserAsync(user);
+                var user = await _userRegister.RegisterUser(userInfo);
                 return Results.Ok("Successfully created user!");
+            }
+            catch(DCCApiException e)
+            {
+                return Results.Problem(e.Message);
             }
             catch (Exception e)
             {

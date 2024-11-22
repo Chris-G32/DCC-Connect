@@ -2,6 +2,7 @@
 using API.Errors;
 using API.Models;
 using API.Models.QueryOptions;
+using API.Models.Shifts;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
