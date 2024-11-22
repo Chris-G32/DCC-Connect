@@ -16,13 +16,14 @@ namespace API.Routes
         private readonly IEmailService _emailService;
         private readonly IAuthService _authService;
         private readonly IUserRegisterService _userRegister;
-
-        public UserRoutes(IUserService userService, IEmailService emailService, IAuthService authService,IUserRegisterService userRegister)
+        private readonly ILogger<UserRoutes> _logger;
+        public UserRoutes(ILogger<UserRoutes> logger,IUserService userService, IEmailService emailService, IAuthService authService,IUserRegisterService userRegister)
         {
             _userService = userService;
             _emailService = emailService;
             _authService = authService;
             _userRegister = userRegister;
+            _logger = logger;
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -30,12 +31,39 @@ namespace API.Routes
             // User CRUD routes
             app.MapPost(RouteConstants.RegisterUserRoute, RegisterUser);
             app.MapGet(RouteConstants.GetUserRoute, GetUser);
+            app.MapGet(RouteConstants.GetUserRoleRoute, GetUserRole);
             app.MapPut(RouteConstants.UpdateUserRoute, UpdateUser);
             app.MapDelete(RouteConstants.DeleteUserRoute, DeleteUser);
             app.MapPost(RouteConstants.LoginUserRoute, LoginUser); // Login route
             app.MapPost(RouteConstants.Validate2FACodeRoute, VerifyMFA); // MFA route
         }
 
+        public async Task<IResult> GetUserRole (string emailOrId,HttpRequest request)
+        {
+            
+            try
+            {
+                string role;
+                if (ObjectId.TryParse(emailOrId, out ObjectId id))
+                {
+                    return Results.Ok(_userService.GetUserRole(id));
+                }
+                else
+                {
+                    return Results.Ok(_userService.GetUserRole(emailOrId));
+                }
+                
+            }
+            catch (DCCApiException e)
+            {
+                return Results.Problem(e.Message);
+            }
+            catch (Exception e)
+            {
+
+                return Results.Problem("Error registering user: " + e.Message);
+            }
+        }
         // Register new user
         public async Task<IResult> RegisterUser(UserRegistrationInfo userInfo)
         {
