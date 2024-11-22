@@ -6,6 +6,7 @@ using API.Constants;
 using System.Security.Cryptography;
 using MongoDB.Bson;
 using API.Models.SignIn;
+using API.Errors;
 
 namespace API.Routes
 {
@@ -40,8 +41,12 @@ namespace API.Routes
         {
             try
             {
-                var user = _userRegister.RegisterUser(userInfo);
+                var user = await _userRegister.RegisterUser(userInfo);
                 return Results.Ok("Successfully created user!");
+            }
+            catch(DCCApiException e)
+            {
+                return Results.Problem(e.Message);
             }
             catch (Exception e)
             {

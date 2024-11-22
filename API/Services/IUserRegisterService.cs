@@ -2,7 +2,8 @@
 using MongoDB.Bson;
 using System.Security.Cryptography;
 using System.Text;
-
+using MongoDB.Driver;
+using API.Errors;
 namespace API.Services;
 
 public interface IUserRegisterService
@@ -34,6 +35,10 @@ public class UserRegisterService(ILogger<UserRegisterService> logger, ICollectio
     }
     public async Task<User> RegisterUser(UserRegistrationInfo userRegistrationInfo)
     {
+        if (_collectionsProvider.Users.Find(user=>user.Email==userRegistrationInfo.Email).FirstOrDefault()!=null)
+        {
+            throw new DCCApiException("User with this email already exists.");
+        }
         var password = GenerateSecurePassword(24);
         var employee = new Employee()
         {
@@ -43,6 +48,7 @@ public class UserRegisterService(ILogger<UserRegisterService> logger, ICollectio
             PhoneNumber = userRegistrationInfo.PhoneNumber,
             EmployeeRole = userRegistrationInfo.EmployeeRole
         };
+
         _collectionsProvider.Employees.InsertOne(employee);
         var user = new User();
         user.Id = ObjectId.GenerateNewId();
