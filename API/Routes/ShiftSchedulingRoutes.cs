@@ -27,12 +27,8 @@ public class ShiftSchedulingRoutes : CarterModule
     }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut(RouteConstants.CreateShiftRoute, CreateShift);
-        app.MapDelete(RouteConstants.DeleteShiftRoute, DeleteShift);
-
         app.MapPut(RouteConstants.AssignShiftRoute, AssignShift);
         app.MapPut(RouteConstants.UnassignShiftRoute, UnassignShift);
-
     }
     /// <summary>
     /// Unassigns the assigned employee from a shift.
@@ -55,26 +51,6 @@ public class ShiftSchedulingRoutes : CarterModule
         return Results.Ok("Assignment removed!");
     }
     /// <summary>
-    /// Deletes a shift from the database. Must be unassigned first.
-    /// </summary>
-    /// <param name="shiftID">Shift id to delete</param>
-    /// <param name="request"></param>
-    /// <returns>Whether the operation succeeded or not.</returns>
-    public async Task<IResult> DeleteShift(string shiftID, HttpRequest request)
-    {
-        try
-        {
-            var shiftObjectId = ObjectId.Parse(shiftID);
-            _shiftScheduler.DeleteShift(shiftObjectId);
-        }
-        catch (Exception e)
-        {
-            return Results.Problem($"Error deleting shift: {e.Message}");
-        }
-
-        return Results.Ok("Shift deleted!");
-    }
-    /// <summary>
     /// Assigns an employee to a shift.
     /// </summary>
     /// <param name="assignment"> Contains what shift should be assigned and who to assign </param>
@@ -92,25 +68,5 @@ public class ShiftSchedulingRoutes : CarterModule
         }
 
         return Results.Ok("Shift assigned!");
-    }
-    /// <summary>
-    /// Creates a shift in the database.
-    /// </summary>
-    /// <param name="shift"> The shifts information. Any id parameter provided here will be ignored and set to null.</param>
-    /// <param name="request"></param>
-    /// <returns></returns>
-    public async Task<IResult> CreateShift(ShiftCreationInfo shift, HttpRequest request)
-    {
-            
-        try
-        {
-            _shiftScheduler.CreateShift(shift);
-        }
-        catch (Exception e)
-        {
-            return Results.Problem("Failed to create shift.");
-        }
-
-        return Results.Ok("Shift Successfully Created");
     }
 }

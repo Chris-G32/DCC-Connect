@@ -31,6 +31,7 @@ namespace API.Routes
             // User CRUD routes
             app.MapPost(RouteConstants.RegisterUserRoute, RegisterUser);
             app.MapGet(RouteConstants.GetUserRoute, GetUser);
+            app.MapGet(RouteConstants.GetUserByIdRoute, GetUserById);
             app.MapGet(RouteConstants.GetUserRoleRoute, GetUserRole);
             app.MapPut(RouteConstants.UpdateUserRoute, UpdateUser);
             app.MapDelete(RouteConstants.DeleteUserRoute, DeleteUser);
@@ -43,7 +44,6 @@ namespace API.Routes
             
             try
             {
-                string role;
                 if (ObjectId.TryParse(emailOrId, out ObjectId id))
                 {
                     return Results.Ok(_userService.GetUserRole(id));
@@ -88,6 +88,19 @@ namespace API.Routes
             try
             {
                 var user = await _userService.GetUserByEmailAsync(email);
+                return user != null ? Results.Ok(user) : Results.NotFound("User not found.");
+            }
+            catch (Exception e)
+            {
+                return Results.Problem("Error retrieving user: " + e.Message);
+            }
+        }
+        // Get user by email
+        public async Task<IResult> GetUserById( string id)
+        {
+            try
+            {
+                var user = _userService.GetUserById(ObjectId.Parse(id));
                 return user != null ? Results.Ok(user) : Results.NotFound("User not found.");
             }
             catch (Exception e)

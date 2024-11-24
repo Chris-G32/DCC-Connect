@@ -13,7 +13,7 @@ public interface IShiftScheduler
 {
     void AssignShift(ShiftAssignment assignment);
     void UnassignShift(ObjectId shiftID);
-    void CreateShift(ShiftCreationInfo shift);
+    void CreateShift(ShiftCreationInfo shift,out Shift createdShift);
     void DeleteShift(ObjectId shiftID);
 }
 public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever entityRetriever, IAvailabiltyService availabiltyService) : IShiftScheduler
@@ -54,7 +54,7 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
         }
         //TODO: Notify employee
     }
-    public void CreateShift(ShiftCreationInfo shiftCreation)
+    public void CreateShift(ShiftCreationInfo shiftCreation,out Shift createdShift)
     {
         
         //TODO: Check the location exists.
@@ -62,7 +62,9 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
         {
             throw new DCCApiException(ShiftSchedulerErrorConstants.CannotCreateShiftInThePastError);
         }
-        _collectionsProvider.Shifts.InsertOne(new Shift(shiftCreation));
+        createdShift=new Shift(shiftCreation);
+        createdShift.Id=ObjectId.GenerateNewId();
+        _collectionsProvider.Shifts.InsertOne(createdShift);
     }
     public void DeleteShift(ObjectId shiftID)
     {

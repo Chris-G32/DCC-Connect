@@ -47,6 +47,7 @@ public class RouteConstants
     public static string UpdateUserPasswordRoute { get; } = UserRouteBase + "updatepassword/";
     public static string RegisterUserRoute { get; } = UserRouteBase + "register/";
     public static string GetUserRoute { get; } = UserRouteBase;
+    public static string GetUserByIdRoute { get; } = GetUserRoute + "{id}/";
     public static string GetUserRoleRoute = GetUserRoute + "role/{emailOrId}";
     public static string UpdateUserRoute { get; } = UserRouteBase;
     public static string DeleteUserRoute { get; } = UserRouteBase;

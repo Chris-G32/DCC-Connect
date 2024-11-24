@@ -2,8 +2,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 using MimeKit.Encodings;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace API.Models;
 
@@ -20,6 +22,8 @@ public class User : MongoObject
     public string JWTSecret { get; set; }
 
     // Used for JWT auth and referencing
+    [BsonIgnoreIfNull]
+    [JsonConverter(typeof(ObjectIdConverter))]
     public ObjectId? EmployeeID { get; set; } // Made nullable
 
     // Active JWT token for this user (stores the token)

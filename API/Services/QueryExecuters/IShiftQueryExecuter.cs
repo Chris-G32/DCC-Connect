@@ -41,6 +41,10 @@ public class ShiftQueryExecuter(ICollectionsProvider provider) : IShiftQueryExec
         {
             filter = filter & builder.Eq(shift => shift.EmployeeID, options.EmployeeIDFilter);
         }
+        if (options.RequiredRoleFilter != null)
+        {
+            filter = filter & builder.Eq(shift => shift.RequiredRole, options.RequiredRoleFilter);
+        }
         filter = filter & BuildFilter((IOpenShiftQueryOptions)options, builder);
         return filter;
 

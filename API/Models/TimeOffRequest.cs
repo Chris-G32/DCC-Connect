@@ -31,6 +31,7 @@ public class TimeOffRequest:MongoObject,IRequireManagerApproval{
     /// <summary>
     /// ID of employee requesting off.
     /// </summary>
+    [JsonConverter(typeof(ObjectIdConverter))]
     public ObjectId EmployeeID { get; set; }
     /// <inheritdoc/>
     public bool? IsManagerApproved { get; set; }=null;
