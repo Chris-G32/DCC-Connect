@@ -6,19 +6,15 @@ namespace API.Models;
 
 public class PickupOffer : MongoObject, IRequireManagerApproval
 {
-    [BsonIgnore]
-    public string OpenShiftIDString { get { return OpenShiftID.ToString(); } set { OpenShiftID = ObjectId.Parse(value); } }
-    [BsonIgnore]
-    public string EmployeeIDString { get { return EmployeeID.ToString(); } set { EmployeeID = ObjectId.Parse(value); } }
-    [JsonIgnore]
     /// <summary>
     /// ID of shift to pickup
     /// </summary>
+    [JsonConverter(typeof(ObjectIdConverter))]
     public ObjectId OpenShiftID { get; internal set; }
-    [JsonIgnore]
     /// <summary>
     /// ID of employee offering to pickup shift
     /// </summary>
+    [JsonConverter(typeof(ObjectIdConverter))]
     public ObjectId EmployeeID { get; internal set; }
     /// <summary>
     /// Status of request for time off. Null means no action taken yet
