@@ -1,6 +1,7 @@
 ﻿using API.Config;
 using API.Constants;
 using API.Models;
+using API.Models.Scheduling.Coverage;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using System.Collections;

@@ -1,5 +1,6 @@
 ﻿using API.Constants;
-using API.Models;
+using API.Models.Scheduling.Coverage;
+using API.Models.Scheduling.Trading;
 using API.Services;
 using Carter;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,7 @@ public class ShiftTradingRoutes : CarterModule
 {
     private readonly IShiftTrader _trader;
     private readonly ILogger<ShiftTradingRoutes> _logger;
-    public ShiftTradingRoutes(IShiftTrader trader,ILogger<ShiftTradingRoutes> logger) : base()
+    public ShiftTradingRoutes(IShiftTrader trader, ILogger<ShiftTradingRoutes> logger) : base()
     {
         _trader = trader;
         _logger = logger;
@@ -36,9 +37,10 @@ public class ShiftTradingRoutes : CarterModule
     {
         try
         {
-            _trader.ApproveTrade(tradeOfferId,!string.IsNullOrEmpty(request.Headers.Authorization));
+            _trader.ApproveTrade(tradeOfferId, !string.IsNullOrEmpty(request.Headers.Authorization));
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             return Results.Problem("Error approving trade.");
         }
         return Results.Ok("Trade approved!");
@@ -79,12 +81,12 @@ public class ShiftTradingRoutes : CarterModule
         }
         return Results.Ok("Pickup denied!");
     }
-    
-    public async Task<IResult> RequestCoverage(CoverageRequestBase<string> coverage, HttpRequest request)
+
+    public async Task<IResult> RequestCoverage(CoverageRequestInfo info, HttpRequest request)
     {
         try
         {
-            _trader.RequestCoverage(new CoverageRequest(coverage));
+            _trader.RequestCoverage(info);
         }
         catch (Exception e)
         {
@@ -93,7 +95,7 @@ public class ShiftTradingRoutes : CarterModule
 
         return Results.Ok("Coverage requested!");
     }
-    public async Task<IResult> TradeShift(TradeOffer offer, HttpRequest request)// TODO
+    public async Task<IResult> TradeShift(TradeOfferCreationInfo offer, HttpRequest request)// TODO
     {
         try
         {
@@ -106,7 +108,7 @@ public class ShiftTradingRoutes : CarterModule
 
         return Results.Ok("Assignment removed!");
     }
-    public async Task<IResult> PickupShift(PickupOffer offer, HttpRequest request)// TODO
+    public async Task<IResult> PickupShift(PickupOfferCreationInfo offer, HttpRequest request)// TODO
     {
         try
         {

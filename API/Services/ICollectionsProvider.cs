@@ -2,6 +2,8 @@
 using API.Models;
 using API.Models.Shifts;
 using MongoDB.Driver;
+using API.Models.Scheduling.Coverage;
+using API.Models.Scheduling.Trading;
 
 namespace API.Services;
 
