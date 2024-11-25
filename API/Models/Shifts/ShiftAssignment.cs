@@ -4,7 +4,15 @@ using System.Text.Json.Serialization;
 
 namespace API.Models.Shifts;
 
-public class ShiftAssignment
+/// <summary>
+/// Interface to restrict the string setters of a shift assignment to only be able to get the ObjectId properties.
+/// </summary>
+public interface IShiftAssignment
+{
+    ObjectId ShiftID { get; }
+    ObjectId? EmployeeID { get; }
+}
+public class ShiftAssignment: IShiftAssignment
 {
     public ShiftAssignment()
     {
@@ -15,17 +23,21 @@ public class ShiftAssignment
         ShiftIDString = shiftId;
         EmployeeIDString = employeeId;
     }
-    public ShiftAssignment(ObjectId shiftId, ObjectId employeeId)
+    public ShiftAssignment(ObjectId shiftId, ObjectId? employeeId=null)
     {
         ShiftID = shiftId;
         EmployeeID = employeeId;
     }
     [JsonIgnore]
-    public ObjectId ShiftID { get; internal set; }
+    public ObjectId ShiftID { get; private set; }
     [JsonIgnore]
-    public ObjectId? EmployeeID { get; internal set; }
-    [BsonIgnore]
+    public ObjectId? EmployeeID { get; private set; }
+    /// <summary>
+    /// String property set from the API. This is used to convert the string to an ObjectId for the ShiftID property.
+    /// </summary>
     public string ShiftIDString { get { return ShiftID.ToString(); } set { ShiftID = ObjectId.Parse(value); } }
-    [BsonIgnore]
-    public string? EmployeeIDString { get { return EmployeeID.ToString(); } set { EmployeeID = ObjectId.Parse(value); } }
+    /// <summary>
+    /// String property set from the API. This is used to convert the string to an ObjectId for the EmployeeID property.
+    /// </summary>
+    public string? EmployeeIDString { get { return EmployeeID.ToString(); } set { EmployeeID = value == null ? null : ObjectId.Parse(value); } }
 }
