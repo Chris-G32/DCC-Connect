@@ -2,6 +2,7 @@
 using API.Errors;
 using API.Models;
 using API.Models.QueryOptions;
+using API.Models.Scheduling.Coverage;
 using API.Services;
 using API.Services.QueryExecuters;
 using Carter;

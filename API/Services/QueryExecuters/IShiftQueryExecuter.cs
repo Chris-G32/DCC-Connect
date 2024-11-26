@@ -1,7 +1,7 @@
 ﻿using API.Constants;
 using API.Errors;
-using API.Models;
 using API.Models.QueryOptions;
+using API.Models.Scheduling.Coverage;
 using API.Models.Shifts;
 using MongoDB.Bson;
 using MongoDB.Driver;
