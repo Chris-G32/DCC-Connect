@@ -45,14 +45,6 @@ namespace API.Routes
                 };
                 user.SetPassword(userInfo.Password);
 
-                // Generate a unique JWT Secret
-                using (var rng = RandomNumberGenerator.Create())
-                {
-                    byte[] secretBytes = new byte[32];
-                    rng.GetBytes(secretBytes);
-                    user.JWTSecret = Convert.ToBase64String(secretBytes);
-                }
-
                 var createdUser = await _userService.CreateUserAsync(user);
                 return Results.Ok("Successfully created user!");
             }
@@ -147,7 +139,7 @@ namespace API.Routes
             try
             {
                 string MFAToken = credentials.Credential;
-                var token=_authService.AuthenticateAndGenerateToken(credentials.Email, MFAToken);
+                var token=_authService.AuthenticateAndGenerateSession(credentials.Email, MFAToken);
                 var user =await _userService.GetUserByEmailAsync(credentials.Email);
                 return Results.Ok(new { Token = token, UserId = user?.Id.ToString() });
 

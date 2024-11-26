@@ -1,8 +1,4 @@
 ﻿using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
 using API.Models;
 using MongoDB.Driver;
 
@@ -10,14 +6,14 @@ namespace API.Services
 {
     public interface IAuthService
     {
-        string AuthenticateAndGenerateToken(string email, string code);
+        string AuthenticateAndGenerateSession(string email, string code);
+        bool ValidateSession(string token);
     }
 
     public class AuthService : IAuthService
     {
-        private readonly ICollectionsProvider _collectionsProvider; // For accessing MongoDB collections
-        private readonly IEmailService _emailService; // Service to handle email-related actions
-        private const int JwtExpirationMinutes = 60; // JWT token expiration time (constant)
+        private readonly ICollectionsProvider _collectionsProvider;
+        private readonly IEmailService _emailService;
 
         public AuthService(ICollectionsProvider collectionsProvider, IEmailService emailService)
         {
@@ -25,15 +21,9 @@ namespace API.Services
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
         }
 
-        /// <summary>
-        /// Validates the 2FA code and generates a JWT token if the code is correct.
-        /// </summary>
-        /// <param name="email">The user's email address.</param>
-        /// <param name="code">The 2FA code to validate.</param>
-        /// <returns>A JWT token string if authentication is successful, otherwise null.</returns>
-        public string AuthenticateAndGenerateToken(string email, string code)
+        // Authenticates a user and generates a session token
+        public string AuthenticateAndGenerateSession(string email, string code)
         {
-            // Fetch user from the MongoDB collection using email
             var user = _collectionsProvider.Users.Find(e => e.Email == email).FirstOrDefault();
 
             if (user == null || !_emailService.ValidateTwoFactorCode(email, code))
@@ -41,27 +31,24 @@ namespace API.Services
                 throw new ArgumentException("Invalid email or 2FA code.");
             }
 
-            if (string.IsNullOrEmpty(user.JWTSecret))
+            var session = new SessionToken(email);
+            _collectionsProvider.Sessions.InsertOne(session);
+
+            return session.Token;
+        }
+
+        // Validates a session token and removes it if expired
+        public bool ValidateSession(string token)
+        {
+            var session = _collectionsProvider.Sessions.Find(s => s.Token == token).FirstOrDefault();
+
+            if (session == null || !session.IsValid())
             {
-                throw new InvalidOperationException("JWT secret is not set for the user.");
+                _collectionsProvider.Sessions.DeleteOne(s => s.Token == token);
+                return false;
             }
 
-            // Create JWT token with user's claims (e.g., EmployeeID)
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(user.JWTSecret); // Get the JWTSecret from the user for signing the token
-
-            var tokenAuth = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[]
-                {
-            new Claim("EmployeeID", user.EmployeeID?.ToString() ?? string.Empty) // Add custom claim for EmployeeID
-        }),
-                Expires = DateTime.UtcNow.AddMinutes(JwtExpirationMinutes), // Set token expiration using the constant
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature) // Secure token signing
-            };
-
-            var token = tokenHandler.CreateToken(tokenAuth); // Generate the token
-            return tokenHandler.WriteToken(token); // Return the JWT token as a string
+            return true;
         }
     }
 }

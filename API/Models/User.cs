@@ -16,14 +16,8 @@ namespace API.Models
         // Hashed password, stored for auth
         public string PasswordHash { get; set; }
 
-        // Secret Key for JWT Auth token and validation, each one is uniquely generated
-        public string JWTSecret { get; set; }
-
         // Used for JWT auth and referencing
         public ObjectId? EmployeeID { get; set; } // Made nullable
-
-        // Active JWT token for this user (stores the token)
-        public string JWTToken { get; set; }  // New property to store active JWT token
 
         // Hashes the password and stores the hash
         public void SetPassword(string password)
@@ -50,18 +44,6 @@ namespace API.Models
                 // Compare the computed hash with the stored password hash
                 return PasswordHash == Convert.ToBase64String(hash);
             }
-        }
-
-        // Sets the JWT token for the user (after successful login or token refresh)
-        public void SetJWTToken(string token)
-        {
-            JWTToken = token;
-        }
-
-        // Clears the JWT token (useful for logout)
-        public void ClearJWTToken()
-        {
-            JWTToken = null;
         }
     }
 }

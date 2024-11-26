@@ -13,15 +13,13 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "API", Version = "v1" });
 
-    // Add JWT Bearer authentication definition
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    // Add session token description
+    c.AddSecurityDefinition("SessionToken", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter 'Bearer' followed by a space and your JWT token. Example: 'Bearer eyJhbGciOiJIUzI1...'"
+        Description = "Enter your session token. Example: 'Token abc123...'"
     });
 
     // Add security requirement
@@ -33,13 +31,14 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new Microsoft.OpenApi.Models.OpenApiReference
                 {
                     Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "SessionToken"
                 }
             },
             Array.Empty<string>()
         }
     });
 });
+
 
 builder.Services.AddCors(options =>
 {
@@ -55,7 +54,6 @@ builder.Services.AddCarter();
 
 /* Auth Services */
 builder.Services.AddSingleton<IAuthService, AuthService>();
-builder.Services.AddSingleton<IJwtReaderService, JwtReaderService>();
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddSingleton<IUserService, UserService>();
 

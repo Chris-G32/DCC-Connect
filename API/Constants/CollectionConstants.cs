@@ -10,4 +10,5 @@ public class CollectionConstants
     public static string TimeOffRequestsCollection { get; } = "timeoff";
     public static string OpenShiftsView { get; } = "openshifts";
     public static string UsersCollection { get; } = "user";
+    public static string SessionsCollection { get; } = "sessions";
 }
