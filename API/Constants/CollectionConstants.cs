@@ -8,6 +8,6 @@ public class CollectionConstants
     public static string TradeOffersCollection { get; } = "shifts.coverage.trades";
     public static string PickupOffersCollection { get; } = "shifts.coverage.pickups";
     public static string TimeOffRequestsCollection { get; } = "timeoff";
-    public static string OpenShiftsView { get; } = "openshifts";
+    public static string LocationsCollection { get; } = "locations";
     public static string UsersCollection { get; } = "user";
 }

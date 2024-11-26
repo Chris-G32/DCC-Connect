@@ -13,7 +13,7 @@ public class ShiftCreationInfo
     /// </summary>
 
     [Length(0, 70)]
-    public required string Location { get; set; }
+    public required string LocationID { get; set; }
     /// <summary>
     /// Role of the employee working the shift
     /// </summary>

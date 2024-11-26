@@ -4,6 +4,7 @@ using API.Models.Shifts;
 using MongoDB.Driver;
 using API.Models.Scheduling.Coverage;
 using API.Models.Scheduling.Trading;
+using API.Models.ShiftLocations;
 
 namespace API.Services;
 
@@ -16,6 +17,7 @@ public interface ICollectionsProvider
     public IMongoCollection<TradeOffer> TradeOffers { get; }
     public IMongoCollection<TimeOffRequest> TimeOffRequests { get; }
     public IMongoCollection<PickupOffer> PickupOffers { get; }
+    public IMongoCollection<ShiftLocation> ShiftLocations { get; }
 
 
 }
@@ -34,5 +36,5 @@ public class CollectionsProvider(IDatabaseProvider db) : ICollectionsProvider
     public IMongoCollection<PickupOffer> PickupOffers => _db.Database.GetCollection<PickupOffer>(CollectionConstants.PickupOffersCollection);
 
     public IMongoCollection<TimeOffRequest> TimeOffRequests => _db.Database.GetCollection<TimeOffRequest>(CollectionConstants.TimeOffRequestsCollection);
-
+    public IMongoCollection<ShiftLocation> ShiftLocations => _db.Database.GetCollection<ShiftLocation>(CollectionConstants.LocationsCollection);
 }

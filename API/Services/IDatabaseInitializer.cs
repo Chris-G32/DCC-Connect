@@ -70,12 +70,14 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
                 //Create Employee Collection
                 CreateCollectionIfNotExists(CollectionConstants.EmployeesCollection, db);
 
+                //Create locations collection
+                CreateCollectionIfNotExists(CollectionConstants.LocationsCollection, db);
+
                 //Create Shift Collection
                 CreateCollectionIfNotExists(CollectionConstants.ShiftsCollection, db);
 
                 // Create Coverage Requests Collection
                 CreateCollectionIfNotExists(CollectionConstants.CoverageRequestsCollection, db);
-
                 // Only one coverage request can exist for a given shift
                 var coverageUniqueIndexName=createUniqueIndex(coverage => coverage.ShiftID, db.GetCollection<CoverageRequest>(CollectionConstants.CoverageRequestsCollection));
                 LogUniqueCreationSuccess(CollectionConstants.CoverageRequestsCollection, "ShiftID", coverageUniqueIndexName);
