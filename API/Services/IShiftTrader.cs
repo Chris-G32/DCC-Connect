@@ -61,17 +61,9 @@ public class ShiftTrader(ILogger<ShiftTrader> logger, IEntityRetriever entityRet
         _scheduler.UnassignShift(tradeOffer.ShiftOfferedID);
 
         //Assign shift offered for trade to the employee requesting coverage.
-        _scheduler.AssignShift(new ShiftAssignment
-        {
-            EmployeeID = coverageRequestShift.EmployeeID,
-            ShiftID = tradeOffer.ShiftOfferedID
-        });
+        _scheduler.AssignShift(new ShiftAssignment(tradeOffer.ShiftOfferedID, coverageRequestShift.EmployeeID));
         //Assign shift requesting coverage to employee offering trade.
-        _scheduler.AssignShift(new ShiftAssignment
-        {
-            EmployeeID = offeredShift.EmployeeID,
-            ShiftID = coverageRequest.ShiftID
-        });
+        _scheduler.AssignShift(new ShiftAssignment(coverageRequest.ShiftID, offeredShift.EmployeeID));
         _logger.LogInformation("Trade executed.");
     }
     public void RequestCoverage(CoverageRequestInfo request)
@@ -193,11 +185,7 @@ public class ShiftTrader(ILogger<ShiftTrader> logger, IEntityRetriever entityRet
     public void ApprovePickup(string pickupOfferId)
     {
         var pickupOffer = ActOnPickup(pickupOfferId, true);
-        _scheduler.AssignShift(new ShiftAssignment
-        {
-            EmployeeID = pickupOffer.EmployeeID,
-            ShiftID = pickupOffer.OpenShiftID
-        });
+        _scheduler.AssignShift(new ShiftAssignment(pickupOffer.OpenShiftID, pickupOffer.EmployeeID));
     }
     public void DenyPickup(string pickupOfferId)
     {
