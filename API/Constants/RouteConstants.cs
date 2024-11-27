@@ -55,4 +55,9 @@ public class RouteConstants
     public static string UpdateJWTTokenRoute { get; } = UserRouteBase + "updatejwt/";  // New route to update JWT token
 
 
+    /*Location COnstants*/
+    public static string LocationRouteBase { get; } = "location/";  // New route to update JWT token
+    public static string GetLocationsRoute { get; } = LocationRouteBase+"get/";  // New route to update JWT token
+
+
 }
