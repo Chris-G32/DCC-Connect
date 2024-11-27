@@ -49,7 +49,6 @@ public class RouteConstants
     public const string UpdateUserRoute = "/user";
     public const string DeleteUserRoute = "/user";
     public const string LoginUserRoute = "/user/login";
-    public const string UpdateJWTTokenRoute = "/user/updatejwt";  // New route to update JWT token
 
 
 }

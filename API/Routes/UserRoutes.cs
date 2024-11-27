@@ -96,12 +96,7 @@ namespace API.Routes
             }
         }
 
-        /// <summary>
-        /// Attempts to sign in a user with the provided credentials.
-        /// </summary>
-        /// <param name="credentials">The users email and password</param>
-        /// <param name="request"></param>
-        /// <returns> Problem when invalid credentials, success when valid</returns>
+        // Attempts to sign in a user with the provided credentials.
         public async Task<IResult> LoginUser(LoginRequest credentials,HttpRequest request)
         {
             try
@@ -129,11 +124,8 @@ namespace API.Routes
                 return Results.Problem("Error logging in: " + e.Message);
             }
         }
-        /// <summary>
-        /// Validates an MFA code with an email and generates a JWT token if successful
-        /// </summary>
-        /// <param name="credentials"> The email and MFA code sent.</param>
-        /// <returns></returns>
+
+        // Validates an MFA code with an email and generates a Session Token if successful
         public async Task<IResult> VerifyMFA(LoginRequest credentials)
         {
             try

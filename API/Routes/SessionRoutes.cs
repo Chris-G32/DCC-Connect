@@ -45,13 +45,25 @@ namespace API.Routes
         // Route for validating a session token
         public async Task<IResult> ValidateSession([FromBody] string token)
         {
-            var isValid = _authService.ValidateSession(token);
-
-            if (isValid)
+            try
             {
-                return Results.Ok("Session is valid");
+                var isValid = _authService.ValidateSession(token);
+
+                if (isValid)
+                {
+                    return Results.Ok("Session is valid");
+                }
+                return Results.Problem("Session is invalid or expired");
             }
-            return Results.Problem("Session is invalid or expired");
+            catch (Exception ex)
+            {
+                // Log the error for debugging purposes
+                _logger.LogError($"Error validating session: {ex.Message}");
+
+                // Return a more specific 500 error message
+                return Results.Problem("An unexpected error occurred while validating the session.");
+            }
         }
+
     }
 }

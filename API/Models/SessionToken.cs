@@ -4,7 +4,7 @@ using System.Text;
 
 namespace API.Models
 {
-    public class SessionToken
+    public class SessionToken : MongoObject
     {
         // Unique session token
         public string Token { get; private set; }
