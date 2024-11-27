@@ -8,6 +8,7 @@ namespace API.Services
     {
         string AuthenticateAndGenerateSession(string email, string code);
         bool ValidateSession(string token);
+        void DeleteSession(string token);
     }
 
     public class AuthService : IAuthService
@@ -50,5 +51,18 @@ namespace API.Services
 
             return true;
         }
+
+        public void DeleteSession(string token)
+        {
+            // Find and delete the session associated with the token
+            var session = _collectionsProvider.Sessions.Find(s => s.Token == token).FirstOrDefault();
+
+            if (session != null)
+            {
+                // Delete the session from the sessions collection
+                _collectionsProvider.Sessions.DeleteOne(s => s.Token == token);
+            }
+        }
+
     }
 }

@@ -34,6 +34,7 @@ public class RouteConstants
     /* Auth Constants */
     public const string GenerateTokenRoute = "/auth/token";
     public const string ValidateTokenRoute = "/auth/validate";
+    public const string DeleteTokenRoute = "/auth/delete";
 
     /* Email Constants */
     public const string Send2FACodeRoute = "/email/send2fa";

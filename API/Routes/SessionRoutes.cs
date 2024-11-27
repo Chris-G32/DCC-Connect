@@ -19,13 +19,14 @@ namespace API.Routes
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("TestSession", (HttpRequest req) =>
+            app.MapPost("auth/test", (HttpRequest req) =>
             {
                 _logger.LogInformation(req.Headers.Authorization);
                 return Results.Ok("Session logged.");
             });
 
             app.MapPost(RouteConstants.ValidateTokenRoute, ValidateSession);
+            app.MapPost(RouteConstants.DeleteTokenRoute, DeleteSession);
         }
 
         // Route for generating a session token with 2FA code
@@ -63,6 +64,10 @@ namespace API.Routes
                 // Return a more specific 500 error message
                 return Results.Problem("An unexpected error occurred while validating the session.");
             }
+        }
+        public void DeleteSession(string token)
+        {
+            _authService.DeleteSession(token);
         }
 
     }
