@@ -37,7 +37,6 @@ public class RouteConstants
 
     /* Email Constants */
     public static string Send2FACodeRoute { get; } = "/email/send2fa";
-    public static string Validate2FACodeRoute { get; } = "/email/validate2fa";
     public static string SendPasswordResetRoute { get; } = "/email/sendpasswordreset";
     public static string ResetPasswordRoute { get; } = "/email/resetpassword";
 
@@ -52,12 +51,12 @@ public class RouteConstants
     public static string UpdateUserRoute { get; } = UserRouteBase;
     public static string DeleteUserRoute { get; } = UserRouteBase;
     public static string LoginUserRoute { get; } = UserRouteBase + "login/";
-    public static string UpdateJWTTokenRoute { get; } = UserRouteBase + "updatejwt/";  // New route to update JWT token
+    public static string Validate2FACodeRoute { get; } = LoginUserRoute + "validate2fa/";
 
 
     /*Location COnstants*/
     public static string LocationRouteBase { get; } = "location/";  // New route to update JWT token
-    public static string GetLocationsRoute { get; } = LocationRouteBase+"get/";  // New route to update JWT token
+    public static string GetLocationsRoute { get; } = LocationRouteBase + "get/";  // New route to update JWT token
 
 
 }
