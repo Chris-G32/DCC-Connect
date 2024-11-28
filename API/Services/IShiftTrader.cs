@@ -29,7 +29,7 @@ public interface IShiftTrader
     /// Offers a trade to another employee for a shift they requested traded/covered.
     /// </summary>
     /// <param name="request"></param>
-    public void OfferTrade(TradeOfferCreationInfo offer);
+    public void OfferTrade(TradeOfferCreationInfo offer, JWTClaims claims);
     /// <summary> 
     /// Offers to pickup a shift
     /// </summary>

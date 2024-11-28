@@ -112,7 +112,8 @@ public class ShiftTradingRoutes : CarterModule
     {
         try
         {
-            _trader.OfferTrade(offer);
+            var claims = AuthUtils.GetClaims(request);
+            _trader.OfferTrade(offer, claims);
         }
         catch (Exception e)
         {
