@@ -1,14 +1,21 @@
+using API.Constants;
 using API.Models;
 using API.Services;
+using API.Services.Authentication;
 using API.Services.QueryExecuters;
 using Carter;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
+
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "API", Version = "v1" });
@@ -53,9 +60,40 @@ builder.Services.AddCors(options =>
 builder.Services.AddLogging();
 builder.Services.AddCarter();
 
+// Add JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtSecret = builder.Configuration["Jwt:Secret"] ?? throw new ArgumentNullException("JWT:Secret must be set in secrets.json");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Configure in appsettings.json
+            ValidAudience = builder.Configuration["Jwt:Audience"], // Configure in appsettings.json
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)) // Configure in secrets.json
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PolicyConstants.EmployeePolicy, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+    });
+    options.AddPolicy(PolicyConstants.ManagerPolicy, policy =>
+    {
+        policy.RequireRole(RoleConstants.Manager, RoleConstants.Admin);
+    });
+    options.AddPolicy(PolicyConstants.AdminPolicy, policy =>
+    {
+        policy.RequireRole(RoleConstants.Admin);
+    });
+});
+
 /* Auth Services */
-builder.Services.AddSingleton<IAuthService, AuthService>();
-builder.Services.AddSingleton<IJwtReaderService, JwtReaderService>();
 builder.Services.AddSingleton<IEmailService, EmailService>();
 builder.Services.AddSingleton<IUserService, UserService>();
 builder.Services.AddSingleton<IUserRegisterService, UserRegisterService>();
@@ -72,6 +110,10 @@ builder.Services.AddSingleton<IShiftScheduler, ShiftScheduler>();
 builder.Services.AddSingleton<IShiftQueryExecuter, ShiftQueryExecuter>();
 builder.Services.AddSingleton<IEmployeeQueryExecuter, EmployeeQueryExecuter>();
 builder.Services.AddSingleton<ICoverageRequestQueryExecuter, CoverageRequestQueryExecuter>();
+builder.Services.AddSingleton<IPasswordService, PasswordService>();
+builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddSingleton<ILoginService,LoginService>();
+builder.Services.AddSingleton<IMFAService, MFAService>();
 builder.Services.AddSingleton<IShiftTrader, ShiftTrader>();
 
 var app = builder.Build();

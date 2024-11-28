@@ -16,6 +16,7 @@ This was developed working with the following image ID: _sha256:4d441da0b85563be
 1. Clone the repository
 1. Clone the latest mongodb image from docker hub. This is the id 4d441da0b855
 1. On Windows you might need to install the WSL2 backend for Docker Desktop, and MongoDB Compass to view the database.
+1. In secrets.json, add the following:`"JWT:Secret": "<your-jwt-secret>"`
 
 ## Running the application
 ### App Settings

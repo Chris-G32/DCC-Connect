@@ -27,6 +27,7 @@ public class ShiftSchedulingRoutes : CarterModule
     }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
+        RequireAuthorization(PolicyConstants.ManagerPolicy);
         app.MapPut(RouteConstants.AssignShiftRoute, AssignShift);
         app.MapPut(RouteConstants.UnassignShiftRoute, UnassignShift);
     }

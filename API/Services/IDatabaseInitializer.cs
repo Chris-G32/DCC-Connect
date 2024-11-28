@@ -1,7 +1,7 @@
 ﻿using API.Config;
 using API.Constants;
-using API.Models;
 using API.Models.Scheduling.Coverage;
+using API.Models.Users;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using System.Collections;
@@ -67,9 +67,9 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
                 _logger.LogInformation($"Attempting to initialize database {_settings.Database}...");
                 var db = _clientProvider.Client.GetDatabase(_settings.Database);
                 _collectionNames = db.ListCollectionNames().ToList();
-                //Create Employee Collection
-                CreateCollectionIfNotExists(CollectionConstants.EmployeesCollection, db);
-
+                //Create Users Collection
+                CreateCollectionIfNotExists(CollectionConstants.UsersCollection, db);
+                createUniqueIndex(user => user.Email, db.GetCollection<User>(CollectionConstants.UsersCollection));
                 //Create locations collection
                 CreateCollectionIfNotExists(CollectionConstants.LocationsCollection, db);
 
@@ -88,9 +88,7 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
                 CreateCollectionIfNotExists(CollectionConstants.TimeOffRequestsCollection, db);
                 //Create Trade Offers Collection
                 CreateCollectionIfNotExists(CollectionConstants.PickupOffersCollection, db);
-                //Create users collection
-                CreateCollectionIfNotExists(CollectionConstants.UsersCollection, db);
-                createUniqueIndex(user => user.Email, db.GetCollection<User>(CollectionConstants.UsersCollection));
+                
                 initSucceeded = true;
                 _logger.LogInformation($"Successfully initialized {_settings.Database}");
             }

@@ -2,11 +2,13 @@
 using API.Models.Scheduling.Coverage;
 using API.Models.Scheduling.Trading;
 using API.Services;
+using API.Utils;
 using Carter;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
+using System.Security.Claims;
 
 namespace API.Routes;
 
@@ -21,6 +23,7 @@ public class ShiftTradingRoutes : CarterModule
     }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
+        RequireAuthorization(PolicyConstants.EmployeePolicy);
         app.MapPut(RouteConstants.OfferUpShiftRoute, RequestCoverage);
         app.MapPut(RouteConstants.TradeShiftRoute, TradeShift);
         app.MapPut(RouteConstants.PickUpShiftRoute, PickupShift);
@@ -29,15 +32,19 @@ public class ShiftTradingRoutes : CarterModule
         // Approval and denial routes
         app.MapPut(RouteConstants.ApproveTradeRoute, ApproveTrade);
         app.MapPut(RouteConstants.DenyTradeRoute, DenyTrade);
-        app.MapPut(RouteConstants.ApprovePickupRoute, ApprovePickup);
-        app.MapPut(RouteConstants.DenyPickupRoute, DenyPickup);
+        app.MapPut(RouteConstants.ApprovePickupRoute, ApprovePickup)
+            .RequireAuthorization(PolicyConstants.ManagerPolicy);
+        app.MapPut(RouteConstants.DenyPickupRoute, DenyPickup)
+            .RequireAuthorization(PolicyConstants.ManagerPolicy);
     }
 
+    // Secured
     public async Task<IResult> ApproveTrade(string tradeOfferId, HttpRequest request)
     {
         try
         {
-            _trader.ApproveTrade(tradeOfferId, !string.IsNullOrEmpty(request.Headers.Authorization));
+            var claims = AuthUtils.GetClaims(request);
+            _trader.ApproveTrade(tradeOfferId, claims);
         }
         catch (Exception e)
         {
@@ -45,11 +52,13 @@ public class ShiftTradingRoutes : CarterModule
         }
         return Results.Ok("Trade approved!");
     }
+    //Secured
     public async Task<IResult> DenyTrade(string tradeOfferId, HttpRequest request)
     {
         try
         {
-            _trader.DenyTrade(tradeOfferId);
+            var claims = AuthUtils.GetClaims(request);
+            _trader.DenyTrade(tradeOfferId, claims);
         }
         catch (Exception e)
         {
@@ -57,6 +66,7 @@ public class ShiftTradingRoutes : CarterModule
         }
         return Results.Ok("Trade denied!");
     }
+    //Secured
     public async Task<IResult> ApprovePickup(string pickupOfferId, HttpRequest request)
     {
         try
@@ -69,6 +79,7 @@ public class ShiftTradingRoutes : CarterModule
         }
         return Results.Ok("Trade approved!");
     }
+    //secured
     public async Task<IResult> DenyPickup(string pickupOfferId, HttpRequest request)
     {
         try
@@ -82,11 +93,13 @@ public class ShiftTradingRoutes : CarterModule
         return Results.Ok("Pickup denied!");
     }
 
+    //Secured
     public async Task<IResult> RequestCoverage(CoverageRequestInfo info, HttpRequest request)
     {
         try
         {
-            _trader.RequestCoverage(info);
+            var claims = AuthUtils.GetClaims(request);
+            _trader.RequestCoverage(info, claims);
         }
         catch (Exception e)
         {

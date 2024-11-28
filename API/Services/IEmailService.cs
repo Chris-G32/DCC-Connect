@@ -3,14 +3,14 @@ using MimeKit;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using API.Models;
+using API.Models.Users;
 
 namespace API.Services
 {
     // Interface for the Email Service, providing methods for sending emails and managing 2FA and password resets
     public interface IEmailService
     {
-        Task<string> SendTwoFactorCodeAsync(string recipientEmail);
+        //Task<string> SendTwoFactorCodeAsync(string recipientEmail);
         bool ValidateTwoFactorCode(string recipientEmail, string code);
         Task<string> SendPasswordResetCodeAsync(string recipientEmail);
         bool ResetPassword(string recipientEmail, string code, User user, string newPassword);
@@ -24,56 +24,20 @@ namespace API.Services
         private readonly int _smtpPort = 587;
         private readonly string _smtpUser; // Store the SMTP username (email)
         private readonly string _smtpPass; // Store the SMTP password (app password)
-        
+
         // Dictionary to store temporary 2FA codes for each user
         private static readonly Dictionary<string, string> _twoFactorCodes = new Dictionary<string, string>();
-        
+
         // Dictionary to store temporary password reset codes for each user
         private static readonly Dictionary<string, string> _passwordResetCodes = new Dictionary<string, string>();
 
         // Constructor to initialize SMTP credentials
-        public EmailService()
+        private readonly ILogger<EmailService> _logger;
+        public EmailService(ILogger<EmailService> logger)
         {
             _smtpUser = "dccconnectnoreply@gmail.com";
             _smtpPass = "onrg uzke kjrw kjfa";
-        }
-
-        // Method to send a 2FA code to the user's email
-        public async Task<string> SendTwoFactorCodeAsync(string recipientEmail)
-        {
-            var code = GenerateVerificationCode();
-
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("DCC Connect", _smtpUser));
-            message.To.Add(MailboxAddress.Parse(recipientEmail));
-            message.Subject = "Your Two-Factor Authentication Code";
-            message.Body = new TextPart("plain")
-            {
-                Text = $"Your authentication code is: {code}"
-            };
-
-            using var client = new SmtpClient();
-            try
-            {
-                await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-                await client.AuthenticateAsync(_smtpUser, _smtpPass);
-                await client.SendAsync(message);
-                Console.WriteLine("2FA code sent!");
-
-                // Store the generated code for validation later
-                _twoFactorCodes[recipientEmail] = code;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending 2FA code: {ex.Message}");
-            }
-            finally
-            {
-                await client.DisconnectAsync(true);
-                client.Dispose();
-            }
-
-            return code;
+            _logger = logger;
         }
 
         // Method to validate the 2FA code entered by the user
@@ -166,11 +130,11 @@ namespace API.Services
                 await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
                 await client.AuthenticateAsync(_smtpUser, _smtpPass);
                 await client.SendAsync(message);
-                Console.WriteLine("Email sent successfully!");
+                
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending email: {ex.Message}");
+                _logger.LogError($"Error sending emai to {recipientEmail}: {ex.Message}");
             }
             finally
             {
