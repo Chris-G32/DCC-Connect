@@ -82,8 +82,18 @@ namespace API.Routes
             try
             {
                 var jwtToken=_loginService.ValidateMFA(credentials);
-                
-                response.Headers.Append("Authorization", $"Bearer {jwtToken}");
+                response.Headers.Append("Authorization", "Bearer " + jwtToken);
+                // Set the JWT token in the HTTP-only cookie
+                response.Cookies.Append(
+                    "sessionid",                 // Cookie name
+                    jwtToken,                        // JWT token value
+                    new CookieOptions
+                    {
+                        HttpOnly = true,             // Prevent access to the cookie via JavaScript (XSS protection)
+                        Secure = true,               // Ensure the cookie is sent only over HTTPS
+                        SameSite = SameSiteMode.None, // Control cross-origin requests (adjust based on your needs)
+                        Expires = DateTime.UtcNow.AddHours(1) // Set expiration time (e.g., 1 hour)
+                    });
 
                 return Results.Ok("Sign in successful.");
 

@@ -15,7 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "API", Version = "v1" });
@@ -75,6 +74,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"], // Configure in appsettings.json
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)) // Configure in secrets.json
         };
+
+        // Extract JWT from cookie
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.TryGetValue("sessionid", out var token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -112,7 +124,7 @@ builder.Services.AddSingleton<IEmployeeQueryExecuter, EmployeeQueryExecuter>();
 builder.Services.AddSingleton<ICoverageRequestQueryExecuter, CoverageRequestQueryExecuter>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
-builder.Services.AddSingleton<ILoginService,LoginService>();
+builder.Services.AddSingleton<ILoginService, LoginService>();
 builder.Services.AddSingleton<IMFAService, MFAService>();
 builder.Services.AddSingleton<IShiftTrader, ShiftTrader>();
 
@@ -122,13 +134,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.Logger.LogDebug("In Development environment");
-
 }
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
+app.UseAuthentication(); // Enable authentication middleware
+app.UseAuthorization(); // Enable authorization middleware
 app.MapCarter();
-
 app.Run();

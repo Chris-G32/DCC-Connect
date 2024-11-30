@@ -17,6 +17,7 @@ public interface IUser : IUserInfo
 /// </summary>
 public class User : UserInfo, IUser
 {
+    public User() { }
     [SetsRequiredMembers]
     public User(UserRegistrationInfo registrationInfo,string password)
     {

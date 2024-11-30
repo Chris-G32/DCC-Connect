@@ -2,6 +2,7 @@
 using API.Constants;
 using API.Models.Scheduling.Coverage;
 using API.Models.Users;
+using API.Services.Authentication;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using System.Collections;
@@ -14,11 +15,13 @@ public interface IDatabaseInitializer
     void InitializeDatabase();
 }
 
-public class DatabaseInitializer(IConfiguration config, IDBClientProvider clientProvider,ILogger<DatabaseInitializer> logger) : IDatabaseInitializer
+public class DatabaseInitializer(IConfiguration config, IDBClientProvider clientProvider, ILogger<DatabaseInitializer> logger, IPasswordService pwService) : IDatabaseInitializer
 {
+    private readonly IConfiguration _config = config;
+    private readonly IPasswordService _pwService = pwService;
     private readonly MongoDBSettings _settings = config.GetRequiredSection(DatabaseConstants.DatabaseSettingsSection).Get<MongoDBSettings>() ?? throw new Exception("MongoDB settings not found in appsettings.json");
     private readonly IDBClientProvider _clientProvider = clientProvider;
-    private readonly ILogger<DatabaseInitializer> _logger=logger;
+    private readonly ILogger<DatabaseInitializer> _logger = logger;
     private List<string> _collectionNames;
     /// <summary>
     /// This ensures a field is unique between entries in a collection. If a field is not unique, an exception will be thrown when trying to insert a document with a duplicate value.
@@ -33,9 +36,9 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
         var indexOptions = new CreateIndexOptions { Unique = true };
         var indexModel = new CreateIndexModel<T>(indexKeysDefinition, indexOptions);
         return collection.Indexes.CreateOne(indexModel);
-        
+
     }
-    private void CreateCollectionIfNotExists(string collectionName,IMongoDatabase db)
+    private void CreateCollectionIfNotExists(string collectionName, IMongoDatabase db)
     {
         //Create Employee Collection
         if (!_collectionNames.Contains(collectionName))
@@ -46,13 +49,13 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
         }
         _logger.LogInformation($"Collection {collectionName} already exists");
     }
-    private void LogUniqueCreationSuccess(string collectionName,string field,string indexName)
+    private void LogUniqueCreationSuccess(string collectionName, string field, string indexName)
     {
         _logger.LogInformation($"Creeated unique index \"{indexName}\" on collection \"{collectionName}\" for field \"{field}\".");
     }
     public void InitializeDatabase()
     {
-        
+
         bool initSucceeded = false;
         while (!initSucceeded)
         {
@@ -79,7 +82,7 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
                 // Create Coverage Requests Collection
                 CreateCollectionIfNotExists(CollectionConstants.CoverageRequestsCollection, db);
                 // Only one coverage request can exist for a given shift
-                var coverageUniqueIndexName=createUniqueIndex(coverage => coverage.ShiftID, db.GetCollection<CoverageRequest>(CollectionConstants.CoverageRequestsCollection));
+                var coverageUniqueIndexName = createUniqueIndex(coverage => coverage.ShiftID, db.GetCollection<CoverageRequest>(CollectionConstants.CoverageRequestsCollection));
                 LogUniqueCreationSuccess(CollectionConstants.CoverageRequestsCollection, "ShiftID", coverageUniqueIndexName);
                 //Create Trade Offers Collection
                 CreateCollectionIfNotExists(CollectionConstants.TradeOffersCollection, db);
@@ -88,7 +91,25 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
                 CreateCollectionIfNotExists(CollectionConstants.TimeOffRequestsCollection, db);
                 //Create Trade Offers Collection
                 CreateCollectionIfNotExists(CollectionConstants.PickupOffersCollection, db);
-                
+                // Add admin user if it doesn't exist
+                try
+                {
+                    var adminUser = new User()
+                    {
+                        Email = _config["Admin:Email"]??throw new Exception("Admin email not provided."),
+                        PasswordHash = _pwService.HashPassword(_config["Admin:Password"] ?? throw new Exception("Admin password not provided.")),
+                        EmployeeRole = RoleConstants.Admin,
+                        PhoneNumber= "111-111-1111",
+                        FirstName = "admin",
+                        LastName = "admin"
+                    };
+                    db.GetCollection<User>(CollectionConstants.UsersCollection).InsertOne(adminUser);
+                }
+                catch (MongoWriteException e)
+                {
+                    _logger.LogWarning($"Admin user already exists.: {e.Message}");
+                }
+
                 initSucceeded = true;
                 _logger.LogInformation($"Successfully initialized {_settings.Database}");
             }
@@ -102,8 +123,8 @@ public class DatabaseInitializer(IConfiguration config, IDBClientProvider client
                 _logger.LogCritical(e, "Failed to initialize database. Unexpected exception.");
                 throw;
             }
-            
+
         }
-        
+
     }
 }
