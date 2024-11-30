@@ -9,6 +9,7 @@ namespace API.Services
         string AuthenticateAndGenerateSession(string email, string code);
         bool ValidateSession(string token);
         void DeleteSession(string token);
+        User GetUserBySessionToken(string token);
     }
 
     public class AuthService : IAuthService
@@ -63,6 +64,30 @@ namespace API.Services
                 _collectionsProvider.Sessions.DeleteOne(s => s.Token == token);
             }
         }
+        
+        // Gets user by session token, returns object
+        public User GetUserBySessionToken(string token)
+        {
+            // Find the session by the provided token
+            var session = _collectionsProvider.Sessions.Find(s => s.Token == token).FirstOrDefault();
+
+            if (session == null)
+            {
+                throw new ArgumentException("Invalid or expired session token.");
+            }
+
+            // Retrieve the user by the email stored in the session
+            var user = _collectionsProvider.Users.Find(u => u.Email == session.UserEmail).FirstOrDefault();
+
+            if (user == null)
+            {
+                throw new ArgumentException("User associated with session token not found.");
+            }
+
+            return user;
+        }
+
+
 
     }
 }

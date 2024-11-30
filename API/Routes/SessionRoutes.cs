@@ -27,6 +27,7 @@ namespace API.Routes
 
             app.MapPost(RouteConstants.ValidateTokenRoute, ValidateSession);
             app.MapPost(RouteConstants.DeleteTokenRoute, DeleteSession);
+            app.MapPost(RouteConstants.UserByTokenRoute, GetUserBySession);
         }
 
         // Route for generating a session token with 2FA code
@@ -69,6 +70,23 @@ namespace API.Routes
         {
             _authService.DeleteSession(token);
         }
+
+        // Route to get user by session token
+        public async Task<IResult> GetUserBySession([FromBody] string token)
+        {
+            try
+            {
+                // Fetch the user associated with the session token
+                var user = _authService.GetUserBySessionToken(token);
+                return Results.Ok(user); // Return the user object
+            }
+            catch (ArgumentException ex)
+            {
+                // Handle errors, such as session being invalid or user not found
+                return Results.Problem(ex.Message);
+            }
+        }
+
 
     }
 }

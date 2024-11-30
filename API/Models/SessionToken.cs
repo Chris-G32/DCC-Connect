@@ -10,7 +10,7 @@ namespace API.Models
         public string Token { get; private set; }
 
         // Associated user data (replace `object` with a specific type if needed)
-        public String UserData { get; set; }
+        public String UserEmail { get; set; }
 
         // Expiration timestamp for the session
         public DateTime Expiration { get; private set; }
@@ -18,7 +18,7 @@ namespace API.Models
         // Default constructor
         public SessionToken(String userData)
         {
-            UserData = userData;
+            UserEmail = userData;
             Token = GenerateToken();
             Expiration = DateTime.UtcNow.AddHours(1); // Set expiration to one hour from now
         }
