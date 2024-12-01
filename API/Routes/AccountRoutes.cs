@@ -9,21 +9,33 @@ using API.Errors;
 using Amazon.Runtime;
 using API.Services.Authentication;
 using API.Models.Users;
+using API.Utils;
 
 namespace API.Routes
 {
-    public class AccountRoutes(ILogger<AccountRoutes> logger, ILoginService loginService, IUserRegisterService userRegisterService) : CarterModule
+    public class AccountRoutes(ILogger<AccountRoutes> logger, ILoginService loginService, IUserRegisterService userRegisterService, IUserService userService) : CarterModule
     {
         private readonly ILoginService _loginService = loginService;
         private readonly IUserRegisterService _userRegisterService = userRegisterService;
         private readonly ILogger<AccountRoutes> _logger = logger;
+        private readonly IUserService _userService = userService;
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost(RouteConstants.RegisterUserRoute, RegisterUser).RequireAuthorization();
+            //Create new user
+            app.MapPost(RouteConstants.RegisterUserRoute, RegisterUser).RequireAuthorization(PolicyConstants.ManagerPolicy);
+
+            //Signing in routes
             app.MapPost(RouteConstants.LoginUserRoute, LoginUser); // Login route
             app.MapPost(RouteConstants.Validate2FACodeRoute, VerifyMFA); // MFA route
+            app.MapGet(RouteConstants.SignedInUserRoute, (HttpRequest request) =>
+            {
+                var claims = AuthUtils.GetClaims(request);
+                var userWithoutPassword = new UserInfo(_userService.GetUserById(claims.UserID));
 
+                return Results.Ok(userWithoutPassword);
+
+            }).RequireAuthorization(PolicyConstants.EmployeePolicy);
             // User CRUD routes
             //app.MapGet(RouteConstants.GetUserRoute, Get);
             //app.MapGet(RouteConstants.GetUserByIdRoute, GetUserById);
@@ -61,7 +73,7 @@ namespace API.Routes
             try
             {
                 bool sentMfaCode = _loginService.StartSession(credentials);
-                if(!sentMfaCode)
+                if (!sentMfaCode)
                 {
                     return Results.Unauthorized();
                 }
@@ -81,7 +93,7 @@ namespace API.Routes
         {
             try
             {
-                var jwtToken=_loginService.ValidateMFA(credentials);
+                var jwtToken = _loginService.ValidateMFA(credentials);
                 response.Headers.Append("Authorization", "Bearer " + jwtToken);
                 // Set the JWT token in the HTTP-only cookie
                 response.Cookies.Append(

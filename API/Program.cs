@@ -72,7 +72,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"], // Configure in appsettings.json
             ValidAudience = builder.Configuration["Jwt:Audience"], // Configure in appsettings.json
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)) // Configure in secrets.json
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)), // Configure in secrets.json
+            
         };
 
         // Extract JWT from cookie

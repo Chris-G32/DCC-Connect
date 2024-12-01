@@ -42,6 +42,7 @@ public class RouteConstants
 
     /* User Constants */
     public static string UserRouteBase { get; } = "user/";
+    public static string SignedInUserRoute { get; } = UserRouteBase+"signedin/";
     public static string CreateUserRoute { get; } = UserRouteBase + "create/";
     public static string UpdateUserPasswordRoute { get; } = UserRouteBase + "updatepassword/";
     public static string RegisterUserRoute { get; } = UserRouteBase + "register/";
