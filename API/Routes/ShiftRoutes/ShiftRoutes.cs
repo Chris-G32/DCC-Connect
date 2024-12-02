@@ -8,6 +8,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using API.Models.Shifts;
 using API.Services;
+using API.Utils;
 
 namespace API.Routes.ShiftRoutes;
 
@@ -96,6 +97,7 @@ public class ShiftRoutes(ILogger<ShiftRoutes> logger, IShiftQueryExecuter shiftR
     {
         try
         {
+
             TimeRange? range = null;
             //If both start and end are provided, assing to range.
             if (startAvailability != null && endAvailability != null)
@@ -106,6 +108,11 @@ public class ShiftRoutes(ILogger<ShiftRoutes> logger, IShiftQueryExecuter shiftR
             else if (startAvailability != endAvailability)
             {
                 return Results.BadRequest("startAvailability and endAvailability must be provided together.");
+            }
+            var claims = AuthUtils.GetClaims(request);
+            if (claims.Role == RoleConstants.Employee)
+            {
+                assignedEmployeeId = claims.UserID.ToString();
             }
             var options = new ShiftQueryOptions { TimeFilter = range, EmployeeIDFilterString = assignedEmployeeId, RequiredRoleFilter = requiredRole };
             var result = openShiftsOnly == true ? _shiftRetriever.GetOpenShifts(options) : _shiftRetriever.GetShifts(options);
