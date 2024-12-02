@@ -28,9 +28,13 @@ public class CoverageRequestQueryExecuter(ICollectionsProvider cp, IShiftQueryEx
         var shifts = _shiftQueryExecuter.GetShifts(options);
         var builder = Builders<CoverageRequest>.Filter;
         var filter = builder.In(request => request.ShiftID, shifts.Select(shift => shift.Id));
-        if (options.CoverageType != null)
+        if (options.PickupsOnly == true)
         {
-            filter = filter & builder.Eq(request => request.CoverageType, options.CoverageType);
+            filter = filter & (builder.Eq(request => request.CoverageType, CoverageOptions.PickupOnly)|builder.Eq(request => request.CoverageType, CoverageOptions.PickupOrTrade));
+        }
+        else if (options.TradesOnly == true)
+        {
+            filter = filter & (builder.Eq(request => request.CoverageType, CoverageOptions.TradeOnly) | builder.Eq(request => request.CoverageType, CoverageOptions.PickupOrTrade));
         }
         return _collectionsProvider.CoverageRequests.Find(filter).ToList();
 

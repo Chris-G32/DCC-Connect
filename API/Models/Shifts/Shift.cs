@@ -12,7 +12,7 @@ public class Shift : MongoObject
     public Shift(ShiftCreationInfo creationInfo)
     {
         ShiftPeriod = creationInfo.ShiftPeriod;
-        Location = creationInfo.Location;
+        Location = ObjectId.Parse(creationInfo.LocationID);
         RequiredRole = creationInfo.RequiredRole;
     }
     private const double MAX_SHIFT_LENGTH_HRS = 16;// According to derron. May need updated.
@@ -37,12 +37,12 @@ public class Shift : MongoObject
             _shiftPeriod = value;
         }
     }
-
     /// <summary>
-    /// Address of the home where the shift is taking place
+    /// Object id of the location the shift is at
     /// </summary>
-    [Length(0, 70)]
-    public string Location { get; set; }
+    [JsonConverter(typeof(ObjectIdConverter))]
+    public ObjectId Location { get; set; }
+
     private string _requiredRole;
     /// <summary>
     /// Role of the employee working the shift

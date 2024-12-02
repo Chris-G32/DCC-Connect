@@ -1,24 +1,25 @@
 ﻿using MongoDB.Driver;
-using API.Models;
 using MongoDB.Bson;
 using API.Errors;
 using API.Constants;
+using API.Models.Users;
 
 namespace API.Services
 {
     public interface IUserService
     {
-        Task<User> GetUserByEmailAsync(string email);
-        User GetUserByEmail(string email);
-
-        Task<User> CreateUserAsync(User user);
+        //get user byid
+        //get usre by email
+        //Task<User> GetUserByEmailAsync(string email);
+        User? GetUserByEmail(string email);
         public User GetUserById(ObjectId id);
-        public string GetUserRole(ObjectId id);
-        public string GetUserRole(string email);
-        Task<User> UpdateUserAsync(string email, User updatedUser);
-        Task<User> UpdateJWTTokenAsync(string email, string jwtToken);  // Method to update JWT token
-        Task<User> GetUserByJWTTokenAsync(string jwtToken); // New method to get user by JWT token
-        Task<bool> DeleteUserAsync(string email);
+        //public string GetUserRole(ObjectId id);
+
+        ////Task<User> CreateUserAsync(User user);
+        //public string GetUserRole(string email);
+        //Task<User> UpdateUserAsync(string email, User updatedUser);
+        //Task<User> GetUserByJWTTokenAsync(string jwtToken); // New method to get user by JWT token
+        //Task<bool> DeleteUserAsync(string email);
     }
 
     public class UserService : IUserService
@@ -32,7 +33,7 @@ namespace API.Services
         }
 
         // Get a user by email
-        public User GetUserByEmail(string email)
+        public User? GetUserByEmail(string email)
         {
             return _collectionsProvider.Users.Find(u => u.Email == email).FirstOrDefault();
         }
@@ -42,7 +43,7 @@ namespace API.Services
         }
         public User GetUserById(ObjectId id)
         {
-            var result = _collectionsProvider.Users.Find(u => u.Id == id).FirstOrDefault() ?? throw new EntityDoesNotExistException(id.ToString(), CollectionConstants.UsersCollection);
+
             return _collectionsProvider.Users.Find(u => u.Id == id).FirstOrDefault();
         }
 
@@ -71,24 +72,6 @@ namespace API.Services
             return result.IsAcknowledged ? updatedUser : null;
         }
 
-        // Update the JWT token for a user
-        public async Task<User> UpdateJWTTokenAsync(string email, string jwtToken)
-        {
-            var updateDefinition = Builders<User>.Update.Set(u => u.JWTToken, jwtToken);
-
-            var result = await _collectionsProvider.Users.UpdateOneAsync(
-                u => u.Email == email,
-                updateDefinition);
-
-            return result.MatchedCount > 0 ? await GetUserByEmailAsync(email) : null;
-        }
-
-        // Get the user by JWT token
-        public async Task<User> GetUserByJWTTokenAsync(string jwtToken)
-        {
-            return await _collectionsProvider.Users.Find(u => u.JWTToken == jwtToken).FirstOrDefaultAsync();
-        }
-
         // Delete a user by email
         public async Task<bool> DeleteUserAsync(string email)
         {
@@ -96,16 +79,16 @@ namespace API.Services
             return result.DeletedCount > 0;
         }
 
-        public string GetUserRole(ObjectId id)
-        {
-            var employeeId = GetUserById(id).EmployeeID;
-            return _collectionsProvider.Employees.Find(e=>e.Id== employeeId).FirstOrDefault().EmployeeRole;
-        }
+        //public string GetUserRole(ObjectId id)
+        //{
+        //    var user = GetUserById(id);
+        //    return user.EmployeeRole;
+        //}
 
-        public string GetUserRole(string email)
-        {
-            var employeeId = GetUserByEmail(email).EmployeeID;
-            return _collectionsProvider.Employees.Find(e => e.Id == employeeId).FirstOrDefault().EmployeeRole;
-        }
+        //public string GetUserRole(string email)
+        //{
+        //    var employeeId = GetUserByEmail(email);
+        //    return _collectionsProvider.Users.Find(e => e.Id == id).FirstOrDefault().EmployeeRole;
+        //}
     }
 }

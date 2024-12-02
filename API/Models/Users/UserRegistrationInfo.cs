@@ -1,8 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace API.Models;
+namespace API.Models.Users;
 
-public class UserRegistrationInfo
+/// <summary>
+/// Exists mainly so API doesn't accept an object id in registration
+/// </summary>
+public class UserRegistrationInfo: IUserInfo
 {
 
     // Email for login and 2FA
