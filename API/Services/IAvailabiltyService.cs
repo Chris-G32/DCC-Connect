@@ -1,5 +1,7 @@
 ﻿using API.Errors;
 using API.Models;
+using API.Models.Shifts;
+using API.Models.Users;
 using API.Utils;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -21,8 +23,8 @@ public interface IAvailabiltyService
     bool IsEmployeeAvailable(ObjectId? employeeID, TimeRange timeRange);
     bool IsKnownToExistEmployeeAvailable(ObjectId? employeeID, TimeRange timeRange);
     bool IsShiftOpen(ObjectId? shiftID, out Shift? shift);
-    List<Employee> GetAvailableEmployeesForShift(ObjectId shiftID);
-    List<Employee> GetAvailableEmployeesForShift(Shift shift);
+    List<User> GetAvailableEmployeesForShift(ObjectId shiftID);
+    List<User> GetAvailableEmployeesForShift(Shift shift);
     bool IsEmployeeSchedulableForShift(ObjectId? employeeID, ObjectId shiftID);
 }
 public class AvailablityService(IEntityRetriever entityRetriever) : IAvailabiltyService
@@ -67,21 +69,21 @@ public class AvailablityService(IEntityRetriever entityRetriever) : IAvailabilty
             return false;
         }
 
-        if (!_entityRetriever.DoesEntityExist(_collectionsProvider.Employees, employeeID))
+        if (!_entityRetriever.DoesEntityExist(_collectionsProvider.Users, employeeID))
         {
             return false;
         }
 
         return IsKnownToExistEmployeeAvailable(employeeID, timeRange);
     }
-    public List<Employee> GetAvailableEmployeesForShift(ObjectId shiftID)
+    public List<User> GetAvailableEmployeesForShift(ObjectId shiftID)
     {
         return GetAvailableEmployeesForShift(_entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID));
     }
-    public List<Employee> GetAvailableEmployeesForShift(Shift shift)
+    public List<User> GetAvailableEmployeesForShift(Shift shift)
     {
         var shiftID = shift.Id ?? throw new DCCApiException("Shift has no ID populated.");
-        return _collectionsProvider.Employees.Find(employee => IsKnownToExistEmployeeAvailable(employee.Id, shift.ShiftPeriod)).ToList();
+        return _collectionsProvider.Users.Find(employee => IsKnownToExistEmployeeAvailable(employee.Id, shift.ShiftPeriod)).ToList();
     }
     /// <summary>
     /// Checks if a shift is schedulable. That is it is in the future, and either has not been assigned or is open for pickup.

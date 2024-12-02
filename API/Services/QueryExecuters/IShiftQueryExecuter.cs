@@ -1,7 +1,8 @@
 ﻿using API.Constants;
 using API.Errors;
-using API.Models;
 using API.Models.QueryOptions;
+using API.Models.Scheduling.Coverage;
+using API.Models.Shifts;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -39,6 +40,10 @@ public class ShiftQueryExecuter(ICollectionsProvider provider) : IShiftQueryExec
         if (options.EmployeeIDFilter != null)
         {
             filter = filter & builder.Eq(shift => shift.EmployeeID, options.EmployeeIDFilter);
+        }
+        if (options.RequiredRoleFilter != null)
+        {
+            filter = filter & builder.Eq(shift => shift.RequiredRole, options.RequiredRoleFilter);
         }
         filter = filter & BuildFilter((IOpenShiftQueryOptions)options, builder);
         return filter;

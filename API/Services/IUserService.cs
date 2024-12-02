@@ -1,14 +1,25 @@
 ﻿using MongoDB.Driver;
-using API.Models;
+using MongoDB.Bson;
+using API.Errors;
+using API.Constants;
+using API.Models.Users;
 
 namespace API.Services
 {
     public interface IUserService
     {
-        Task<User> GetUserByEmailAsync(string email);
-        Task<User> CreateUserAsync(User user);
-        Task<User> UpdateUserAsync(string email, User updatedUser);
-        Task<bool> DeleteUserAsync(string email);
+        //get user byid
+        //get usre by email
+        //Task<User> GetUserByEmailAsync(string email);
+        User? GetUserByEmail(string email);
+        public User GetUserById(ObjectId id);
+        //public string GetUserRole(ObjectId id);
+
+        ////Task<User> CreateUserAsync(User user);
+        //public string GetUserRole(string email);
+        //Task<User> UpdateUserAsync(string email, User updatedUser);
+        //Task<User> GetUserByJWTTokenAsync(string jwtToken); // New method to get user by JWT token
+        //Task<bool> DeleteUserAsync(string email);
     }
 
     public class UserService : IUserService
@@ -19,14 +30,21 @@ namespace API.Services
         public UserService(ICollectionsProvider cp)
         {
             _collectionsProvider = cp;
-
-
         }
 
         // Get a user by email
+        public User? GetUserByEmail(string email)
+        {
+            return _collectionsProvider.Users.Find(u => u.Email == email).FirstOrDefault();
+        }
         public async Task<User> GetUserByEmailAsync(string email)
         {
             return await _collectionsProvider.Users.Find(u => u.Email == email).FirstOrDefaultAsync();
+        }
+        public User GetUserById(ObjectId id)
+        {
+
+            return _collectionsProvider.Users.Find(u => u.Id == id).FirstOrDefault();
         }
 
         // Create a new user
@@ -60,5 +78,17 @@ namespace API.Services
             var result = await _collectionsProvider.Users.DeleteOneAsync(u => u.Email == email);
             return result.DeletedCount > 0;
         }
+
+        //public string GetUserRole(ObjectId id)
+        //{
+        //    var user = GetUserById(id);
+        //    return user.EmployeeRole;
+        //}
+
+        //public string GetUserRole(string email)
+        //{
+        //    var employeeId = GetUserByEmail(email);
+        //    return _collectionsProvider.Users.Find(e => e.Id == id).FirstOrDefault().EmployeeRole;
+        //}
     }
 }

@@ -2,15 +2,18 @@
 using API.Errors;
 using API.Models;
 using API.Models.QueryOptions;
+using API.Models.Scheduling.Coverage;
 using API.Services;
 using API.Services.QueryExecuters;
 using Carter;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.ComponentModel;
 
 namespace API.Routes;
 
@@ -26,7 +29,6 @@ public class QueryRoutes(ILogger<QueryRoutes> logger, IShiftQueryExecuter shiftR
     private readonly IEmployeeQueryExecuter _employeeRetriever = employeeRetriever;
     private readonly ICoverageRequestQueryExecuter _coverageRequestRetriever = covReqQueryer;
     private readonly ILogger<QueryRoutes> _logger = logger;
-
     /// <summary>
     /// Provides a reusable result for MongoDB-related errors.
     /// </summary>
@@ -38,44 +40,16 @@ public class QueryRoutes(ILogger<QueryRoutes> logger, IShiftQueryExecuter shiftR
     /// <param name="app">The endpoint route builder used to map routes.</param>
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
+        RequireAuthorization(PolicyConstants.EmployeePolicy);
         // GET routes
-        app.MapGet(RouteConstants.GetShiftByIdRoute, GetShiftById);
         app.MapGet(RouteConstants.GetEmployeeByIdRoute, GetEmployeeById);
         app.MapGet(RouteConstants.GetCoverageRequestByIdRoute, GetCoverageRequestById);
-        // POST routes
-        app.MapPost(RouteConstants.GetEmployeeRoute, GetEmployees);
-        app.MapPost(RouteConstants.GetShiftRoute, GetShifts);
-        app.MapPost(RouteConstants.GetOpenShiftRoute, GetOpenShifts);
-        app.MapPost(RouteConstants.GetCoverageRequestRoute, GetCoverageRequests);
+        app.MapGet(RouteConstants.GetEmployeeRoute, GetEmployees);
+        app.MapGet(RouteConstants.GetCoverageRequestRoute, GetCoverageRequests);
+        app.MapGet(RouteConstants.GetCoverageRequestRoute+"detailed/", GetCoverageRequestsDetailed);
     }
 
-    /// <summary>
-    /// Retrieves a shift by its ID.
-    /// </summary>
-    /// <param name="id">The ID of the shift to retrieve.</param>
-    /// <param name="request">The HTTP request containing additional details.</param>
-    /// <returns>The shift details if found; otherwise, an error result.</returns>
-    public async Task<IResult> GetShiftById(string id, HttpRequest request)
-    {
-        try
-        {
-            return Results.Ok(_shiftRetriever.GetShift(ObjectId.Parse(id)));
-        }
-        catch (DCCApiException e)
-        {
-            return Results.Problem(e.Message);
-        }
-        catch (MongoException e)
-        {
-            _logger.LogError(e, "Error with Mongo DB occurred");
-            return MongoProblem();
-        }
-        catch (Exception e)
-        {
-            _logger.LogCritical($"Unexpected exception thrown in {RouteConstants.GetShiftByIdRoute}: {e.Message}");
-            return Results.Problem();
-        }
-    }
+
     /// <summary>
     /// Retrieves an employee by its ID.
     /// </summary>
@@ -134,14 +108,29 @@ public class QueryRoutes(ILogger<QueryRoutes> logger, IShiftQueryExecuter shiftR
     /// <summary>
     /// Retrieves employees based on query filters.
     /// </summary>
-    /// <param name="filter">The query options for filtering employees.</param>
-    /// <param name="request">The HTTP request containing additional details.</param>
-    /// <returns>A list of employees matching the query; otherwise, an error result.</returns>
-    public async Task<IResult> GetEmployees(EmployeeQueryOptions filter, HttpRequest request)
+    /// <param name="startAvailability">Beginning of a period to find employees that are available during</param>
+    /// <param name="endAvailability">End of avaliablity period</param>
+    /// <param name="employeeRole">The role of employees to filter by</param>
+    /// <param name="request"></param>
+    /// <returns>A list of employees matching the query; otherwise, an error result</returns>
+    public async Task<IResult> GetEmployees(DateTime? startAvailability, DateTime? endAvailability, string? employeeRole, HttpRequest request)
     {
         try
         {
-            var result = _employeeRetriever.GetEmployees(filter);
+            TimeRange? range = null;
+            //If both start and end are provided, assing to range.
+            if (startAvailability != null && endAvailability != null)
+            {
+                range = new TimeRange(startAvailability.Value, endAvailability.Value);
+            }
+            //This is true if only one of the two is provided.
+            else if (startAvailability != endAvailability)
+            {
+                return Results.BadRequest("startAvailability and endAvailability must be provided together.");
+            }
+
+            var employeeQueryOptions = new EmployeeQueryOptions { EmployeeRole = employeeRole, TimeFilter = range };
+            var result = _employeeRetriever.GetEmployees(employeeQueryOptions);
             _logger.LogInformation($"Successfully processed request to \"{RouteConstants.GetEmployeeRoute}\"");
             return Results.Ok(result);
         }
@@ -162,36 +151,7 @@ public class QueryRoutes(ILogger<QueryRoutes> logger, IShiftQueryExecuter shiftR
         }
     }
 
-    /// <summary>
-    /// Retrieves shifts based on query filters.
-    /// </summary>
-    /// <param name="filter">The query options for filtering shifts.</param>
-    /// <param name="request">The HTTP request containing additional details.</param>
-    /// <returns>A list of shifts matching the query; otherwise, an error result.</returns>
-    public async Task<IResult> GetShifts(ShiftQueryOptions filter, HttpRequest request)
-    {
-        try
-        {
-            var result = _shiftRetriever.GetShifts(filter);
-            _logger.LogInformation($"Successfully processed request to \"{RouteConstants.GetShiftRoute}\"");
-            return Results.Ok(result);
-        }
-        catch (DCCApiException e)
-        {
-            _logger.LogWarning($"Request to \"{RouteConstants.GetShiftRoute}\" failed gracefully.");
-            return Results.Problem(e.Message);
-        }
-        catch (MongoException e)
-        {
-            _logger.LogError(e, "Error with Mongo DB occurred");
-            return MongoProblem();
-        }
-        catch (Exception e)
-        {
-            _logger.LogCritical($"Unexpected exception thrown in \"{RouteConstants.GetShiftRoute}\": {e.Message}");
-            return Results.Problem();
-        }
-    }
+
 
     /// <summary>
     /// Retrieves open shifts based on query filters.
@@ -229,13 +189,84 @@ public class QueryRoutes(ILogger<QueryRoutes> logger, IShiftQueryExecuter shiftR
     /// <param name="filter">The query options for filtering employees.</param>
     /// <param name="request">The HTTP request containing additional details.</param>
     /// <returns>A list of employees matching the query; otherwise, an error result.</returns>
-    public async Task<IResult> GetCoverageRequests(CoverageRequestQueryOptions filter, HttpRequest request)
+    public async Task<IResult> GetCoverageRequests(DateTime? startAvailability, DateTime? endAvailability, bool? tradesOnly, bool? pickupsOnly, string? requiredRole, string? employeeID, HttpRequest request)
     {
         try
         {
+            TimeRange? range = null;
+            //If both start and end are provided, assing to range.
+            if (startAvailability != null && endAvailability != null)
+            {
+                range = new TimeRange(startAvailability.Value, endAvailability.Value);
+            }
+            //This is true if only one of the two is provided.
+            else if (startAvailability != endAvailability)
+            {
+                return Results.BadRequest("startAvailability and endAvailability must be provided together.");
+            }
+
+            var filter = new CoverageRequestQueryOptions { TimeFilter = range, PickupsOnly = pickupsOnly, TradesOnly = tradesOnly, RequiredRoleFilter = requiredRole, EmployeeIDFilterString = employeeID };
+            if (!filter.IsValidQuery())
+            {
+                return Results.BadRequest("Cannot specify both tradesOnly and pickupsOnly.");
+            };
             var result = _coverageRequestRetriever.GetCoverageRequests(filter);
             _logger.LogInformation($"Successfully processed request to \"{RouteConstants.GetCoverageRequestRoute}\"");
             return Results.Ok(result);
+        }
+        catch (DCCApiException e)
+        {
+            _logger.LogWarning($"Request to \"{RouteConstants.GetCoverageRequestRoute}\" failed gracefully.");
+            return Results.Problem(e.Message);
+        }
+        catch (MongoException e)
+        {
+            _logger.LogError(e, "Error with Mongo DB occurred");
+            return MongoProblem();
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical($"Unexpected exception thrown in \"{RouteConstants.GetCoverageRequestRoute}\": {e.Message}");
+            return Results.Problem();
+        }
+    }
+    /// <summary>
+    /// Retrieves employees based on query filters.
+    /// </summary>
+    /// <param name="filter">The query options for filtering employees.</param>
+    /// <param name="request">The HTTP request containing additional details.</param>
+    /// <returns>A list of employees matching the query; otherwise, an error result.</returns>
+    public async Task<IResult> GetCoverageRequestsDetailed(DateTime? startAvailability, DateTime? endAvailability, bool? tradesOnly, bool? pickupsOnly, string? requiredRole, string? employeeID, HttpRequest request)
+    {
+        try
+        {
+            TimeRange? range = null;
+            //If both start and end are provided, assing to range.
+            if (startAvailability != null && endAvailability != null)
+            {
+                range = new TimeRange(startAvailability.Value, endAvailability.Value);
+            }
+            //This is true if only one of the two is provided.
+            else if (startAvailability != endAvailability)
+            {
+                return Results.BadRequest("startAvailability and endAvailability must be provided together.");
+            }
+
+            var filter = new CoverageRequestQueryOptions { TimeFilter = range, PickupsOnly = pickupsOnly, TradesOnly = tradesOnly, RequiredRoleFilter = requiredRole, EmployeeIDFilterString = employeeID };
+            if (!filter.IsValidQuery())
+            {
+                return Results.BadRequest("Cannot specify both tradesOnly and pickupsOnly.");
+            };
+            var coverage = _coverageRequestRetriever.GetCoverageRequests(filter);
+            var associatedShifts = _shiftRetriever.GetShifts(filter);
+            var employees=_employeeRetriever.GetEmployees(new EmployeeQueryOptions { EmployeeRole = requiredRole });
+            var withoutEmployeeDetail=coverage.Join(associatedShifts, cr => cr.ShiftID, s => s.Id, (cr, s) => { return new CoverageRequestDetail() { CoverageRequest = cr, Shift = s }; }).ToList();
+            foreach(var coverageReqDetail in withoutEmployeeDetail)
+            {
+                coverageReqDetail.Employee=employees.Find(e => e.Id == coverageReqDetail.Shift.EmployeeID);
+            }
+            _logger.LogInformation($"Successfully processed request to \"{RouteConstants.GetCoverageRequestRoute}\"");
+            return Results.Ok(withoutEmployeeDetail);
         }
         catch (DCCApiException e)
         {

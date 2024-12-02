@@ -1,11 +1,14 @@
 ﻿using API.Constants;
-using API.Models;
+using API.Models.Scheduling.Coverage;
+using API.Models.Scheduling.Trading;
 using API.Services;
+using API.Utils;
 using Carter;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Configuration;
+using System.Security.Claims;
 
 namespace API.Routes;
 
@@ -13,13 +16,14 @@ public class ShiftTradingRoutes : CarterModule
 {
     private readonly IShiftTrader _trader;
     private readonly ILogger<ShiftTradingRoutes> _logger;
-    public ShiftTradingRoutes(IShiftTrader trader,ILogger<ShiftTradingRoutes> logger) : base()
+    public ShiftTradingRoutes(IShiftTrader trader, ILogger<ShiftTradingRoutes> logger) : base()
     {
         _trader = trader;
         _logger = logger;
     }
     public override void AddRoutes(IEndpointRouteBuilder app)
     {
+        RequireAuthorization(PolicyConstants.EmployeePolicy);
         app.MapPut(RouteConstants.OfferUpShiftRoute, RequestCoverage);
         app.MapPut(RouteConstants.TradeShiftRoute, TradeShift);
         app.MapPut(RouteConstants.PickUpShiftRoute, PickupShift);
@@ -28,26 +32,33 @@ public class ShiftTradingRoutes : CarterModule
         // Approval and denial routes
         app.MapPut(RouteConstants.ApproveTradeRoute, ApproveTrade);
         app.MapPut(RouteConstants.DenyTradeRoute, DenyTrade);
-        app.MapPut(RouteConstants.ApprovePickupRoute, ApprovePickup);
-        app.MapPut(RouteConstants.DenyPickupRoute, DenyPickup);
+        app.MapPut(RouteConstants.ApprovePickupRoute, ApprovePickup)
+            .RequireAuthorization(PolicyConstants.ManagerPolicy);
+        app.MapPut(RouteConstants.DenyPickupRoute, DenyPickup)
+            .RequireAuthorization(PolicyConstants.ManagerPolicy);
     }
 
+    // Secured
     public async Task<IResult> ApproveTrade(string tradeOfferId, HttpRequest request)
     {
         try
         {
-            _trader.ApproveTrade(tradeOfferId,!string.IsNullOrEmpty(request.Headers.Authorization));
+            var claims = AuthUtils.GetClaims(request);
+            _trader.ApproveTrade(tradeOfferId, claims);
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             return Results.Problem("Error approving trade.");
         }
         return Results.Ok("Trade approved!");
     }
+    //Secured
     public async Task<IResult> DenyTrade(string tradeOfferId, HttpRequest request)
     {
         try
         {
-            _trader.DenyTrade(tradeOfferId);
+            var claims = AuthUtils.GetClaims(request);
+            _trader.DenyTrade(tradeOfferId, claims);
         }
         catch (Exception e)
         {
@@ -55,6 +66,7 @@ public class ShiftTradingRoutes : CarterModule
         }
         return Results.Ok("Trade denied!");
     }
+    //Secured
     public async Task<IResult> ApprovePickup(string pickupOfferId, HttpRequest request)
     {
         try
@@ -67,6 +79,7 @@ public class ShiftTradingRoutes : CarterModule
         }
         return Results.Ok("Trade approved!");
     }
+    //secured
     public async Task<IResult> DenyPickup(string pickupOfferId, HttpRequest request)
     {
         try
@@ -79,12 +92,14 @@ public class ShiftTradingRoutes : CarterModule
         }
         return Results.Ok("Pickup denied!");
     }
-    
-    public async Task<IResult> RequestCoverage(CoverageRequestBase<string> coverage, HttpRequest request)
+
+    //Secured
+    public async Task<IResult> RequestCoverage(CoverageRequestInfo info, HttpRequest request)
     {
         try
         {
-            _trader.RequestCoverage(new CoverageRequest(coverage));
+            var claims = AuthUtils.GetClaims(request);
+            _trader.RequestCoverage(info, claims);
         }
         catch (Exception e)
         {
@@ -93,11 +108,12 @@ public class ShiftTradingRoutes : CarterModule
 
         return Results.Ok("Coverage requested!");
     }
-    public async Task<IResult> TradeShift(TradeOffer offer, HttpRequest request)// TODO
+    public async Task<IResult> TradeShift(TradeOfferCreationInfo offer, HttpRequest request)// TODO
     {
         try
         {
-            _trader.OfferTrade(offer);
+            var claims = AuthUtils.GetClaims(request);
+            _trader.OfferTrade(offer, claims);
         }
         catch (Exception e)
         {
@@ -106,7 +122,7 @@ public class ShiftTradingRoutes : CarterModule
 
         return Results.Ok("Assignment removed!");
     }
-    public async Task<IResult> PickupShift(PickupOffer offer, HttpRequest request)// TODO
+    public async Task<IResult> PickupShift(PickupOfferCreationInfo offer, HttpRequest request)// TODO
     {
         try
         {

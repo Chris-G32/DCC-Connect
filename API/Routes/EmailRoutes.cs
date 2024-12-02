@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using API.Services;
 using API.Constants;
-using API.Models;
+using API.Models.Users;
 
 namespace API.Routes;
 
@@ -23,11 +23,11 @@ public class EmailRoutes : CarterModule
         app.MapPost(RouteConstants.ResetPasswordRoute, ResetPassword);
     }
 
-    public async Task<IResult> SendTwoFactorCode(string recipientEmail)
-    {
-        var code = await _emailService.SendTwoFactorCodeAsync(recipientEmail);
-        return !string.IsNullOrEmpty(code) ? Results.Ok("2FA code sent!") : Results.Problem("Error sending 2FA code");
-    }
+    //public async Task<IResult> SendTwoFactorCode(string recipientEmail)
+    //{
+    //    var code = await _emailService.SendTwoFactorCodeAsync(recipientEmail);
+    //    return !string.IsNullOrEmpty(code) ? Results.Ok("2FA code sent!") : Results.Problem("Error sending 2FA code");
+    //}
 
     //public IResult ValidateTwoFactorCode(string recipientEmail, string code)
     //{

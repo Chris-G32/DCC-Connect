@@ -1,7 +1,7 @@
 ﻿using API.Constants;
 using API.Constants.Errors;
 using API.Errors;
-using API.Models;
+using API.Models.Shifts;
 using API.Utils;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -11,12 +11,12 @@ namespace API.Services;
 
 public interface IShiftScheduler
 {
-    void AssignShift(ShiftAssignment assignment);
+    void AssignShift(IShiftAssignment assignment);
     void UnassignShift(ObjectId shiftID);
-    void CreateShift(Shift shift);
+    void CreateShift(ShiftCreationInfo shift, out Shift createdShift);
     void DeleteShift(ObjectId shiftID);
 }
-public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever entityRetriever, IAvailabiltyService availabiltyService) : IShiftScheduler
+public class ShiftScheduler(ILogger<ShiftScheduler> logger, IEntityRetriever entityRetriever, IAvailabiltyService availabiltyService) : IShiftScheduler
 {
     private readonly IEntityRetriever _entityRetriever = entityRetriever;
     private readonly ICollectionsProvider _collectionsProvider = entityRetriever.CollectionsProvider;
@@ -28,17 +28,17 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
     /// </summary>
     /// <param name="assignment">The assignment to execute</param>
     /// <returns>True on successful assignment, false otherwise</returns>
-    private bool ApplyShiftAssignment(ShiftAssignment assignment)
+    private bool ApplyShiftAssignment(IShiftAssignment assignment)
     {
         UpdateDefinition<Shift> update = Builders<Shift>.Update.Set(shift => shift.EmployeeID, assignment.EmployeeID);
-        var result=_collectionsProvider.Shifts.UpdateOne(shift => shift.Id == assignment.ShiftID, update);
+        var result = _collectionsProvider.Shifts.UpdateOne(shift => shift.Id == assignment.ShiftID, update);
         if (result.ModifiedCount > 1)
         {
             _logger.LogCritical("Multiple shifts were modified by a single assignment.");
         }
         return result.ModifiedCount > 0;
     }
-    public void AssignShift(ShiftAssignment assignment)
+    public void AssignShift(IShiftAssignment assignment)
     {
         //DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Employees, assignment.EmployeeID);
         //DBEntityUtils.ThrowIfNotExists(_collectionsProvider.Shifts, assignment.ShiftID);
@@ -54,29 +54,32 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
         }
         //TODO: Notify employee
     }
-    public void CreateShift(Shift shift)
+    public void CreateShift(ShiftCreationInfo shiftCreation, out Shift createdShift)
     {
+
         //TODO: Check the location exists.
-        if (shift.ShiftPeriod.Start.ToUniversalTime() < DateTime.Now.ToUniversalTime())
+        if (shiftCreation.ShiftPeriod.Start.ToUniversalTime() < DateTime.Now.ToUniversalTime())
         {
-            throw new Exception("");
+            throw new DCCApiException(ShiftSchedulerErrorConstants.CannotCreateShiftInThePastError);
         }
-        _collectionsProvider.Shifts.InsertOne(shift);
+        createdShift = new Shift(shiftCreation);
+        createdShift.Id = ObjectId.GenerateNewId();
+        _collectionsProvider.Shifts.InsertOne(createdShift);
     }
     public void DeleteShift(ObjectId shiftID)
     {
         var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
         if (shift.EmployeeID != null)
         {
-            throw new DCCApiException(ShiftSchedulerErrorConstants.CannotCreateShiftInThePastError);
+            throw new DCCApiException(ShiftSchedulerErrorConstants.UnassignShiftBeforeDeleteError);
         }
         _collectionsProvider.Shifts.FindOneAndDelete(shift => shift.Id == shiftID);
     }
     public void UnassignShift(ObjectId shiftID)
     {
         var shift = _entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts, shiftID);
-        if (shift.EmployeeID==null)
-        {   
+        if (shift.EmployeeID == null)
+        {
             return;
         }
 
@@ -86,11 +89,7 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger,IEntityRetriever enti
             _collectionsProvider.TradeOffers.DeleteMany(offer => offer.CoverageRequestID == coverage.ShiftID);
         }
 
-        if(!ApplyShiftAssignment(assignment: new ShiftAssignment
-        {
-            EmployeeID = null,
-            ShiftID = shiftID
-        }))
+        if (!ApplyShiftAssignment(assignment: new ShiftAssignment(shiftID,null)))
         {
             throw new DCCApiException(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
         }

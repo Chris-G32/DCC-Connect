@@ -22,7 +22,16 @@ public class MongoClientProvider : IDBClientProvider
         {
             try
             {
-                _client = new MongoClient(_settings.GetClientSettings());
+                if (!string.IsNullOrEmpty(_settings.ConnectionString))
+                {
+                    _client = new MongoClient(_settings.ConnectionString);
+
+                }
+                else
+                {
+                    _client = new MongoClient(_settings.GetClientSettings());
+                }
+             
                 _client.ListDatabaseNames();
                 ClientConnected = true;
                 _logger.LogInformation("Database client initialized successfully.");
@@ -32,6 +41,10 @@ public class MongoClientProvider : IDBClientProvider
             {
                 _logger.LogWarning($"Timeout when attempting to connect MongoClient with the following info URL: {_settings.URL}, Port: {_settings.Port}. Check that server is live.\n Retrying...");
             }
+            catch(Exception e)
+            {
+                _logger.LogError("Unexpected error when attempting to connect MongoClient. Retrying...");
+            }
 
         }
     }
@@ -39,6 +52,7 @@ public class MongoClientProvider : IDBClientProvider
     {
         _logger = logger;
         _settings = settingsProvider.GetSettings();
+        
         ClientConnected = false;
         Task.Run(TryInitClientUntilSuccess);
     }
