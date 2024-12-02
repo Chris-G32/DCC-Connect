@@ -1,5 +1,6 @@
 ﻿using API.Constants;
 using API.Errors;
+using System.Diagnostics.CodeAnalysis;
 
 namespace API.Models.Users;
 
@@ -14,6 +15,15 @@ public interface IEmployeeInfo
 /// </summary>
 public class EmployeeInfo : MongoObject, IEmployeeInfo
 {
+    public EmployeeInfo() { }
+    [SetsRequiredMembers]
+    public EmployeeInfo(EmployeeInfo employeeInfo)
+    {
+        Id = employeeInfo.Id;
+        FirstName = employeeInfo.FirstName;
+        LastName = employeeInfo.LastName;
+        EmployeeRole = employeeInfo.EmployeeRole;
+    }
     public required string FirstName { get ; set ; }
     public required string LastName { get; set; }
     private string? _employeeRole;

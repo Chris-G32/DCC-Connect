@@ -9,8 +9,8 @@ namespace API.Services.QueryExecuters;
 
 public interface IEmployeeQueryExecuter
 {
-    List<User> GetEmployees(EmployeeQueryOptions options);
-    User GetEmployee(ObjectId id);
+    List<EmployeeInfo> GetEmployees(EmployeeQueryOptions options);
+    EmployeeInfo GetEmployee(ObjectId id);
 }
 public class EmployeeQueryExecuter(ILogger<EmployeeQueryExecuter> logger, ICollectionsProvider collectionsProvider, IAvailabiltyService availabiltyService) : IEmployeeQueryExecuter
 {
@@ -26,13 +26,13 @@ public class EmployeeQueryExecuter(ILogger<EmployeeQueryExecuter> logger, IColle
         }
         return filter;
     }
-    public User GetEmployee(ObjectId id)
+    public EmployeeInfo GetEmployee(ObjectId id)
     {
         var result = _collectionsProvider.Users.Find(employee => employee.Id == id).FirstOrDefault() ?? throw new DCCApiException(ErrorConstants.ObjectDoesNotExistError);
         return result;
     }
 
-    public List<User> GetEmployees(EmployeeQueryOptions options)
+    public List<EmployeeInfo> GetEmployees(EmployeeQueryOptions options)
     {
         var builder = Builders<User>.Filter;
         var filter = BuildFilter(options, builder);
@@ -41,8 +41,9 @@ public class EmployeeQueryExecuter(ILogger<EmployeeQueryExecuter> logger, IColle
             return _collectionsProvider.Users.Find(filter)
                 .ToEnumerable()
                 .Where((employee) => { return _availabiltyService.IsKnownToExistEmployeeAvailable(employee.Id, options.TimeFilter); })
+                .Select(employee=>new EmployeeInfo(employee))
                 .ToList();
         }
-        return _collectionsProvider.Users.Find(filter).ToList();
+        return _collectionsProvider.Users.Find(filter).ToEnumerable().Select(employee => new EmployeeInfo(employee)).ToList();
     }
 }
