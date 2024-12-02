@@ -4,7 +4,9 @@ using API.Models;
 using API.Models.QueryOptions;
 using API.Models.ShiftLocations;
 using API.Models.Shifts;
+using API.Models.Users;
 using API.Services;
+using API.Services.Authentication;
 using AutoFixture;
 using Bogus;
 using MongoDB.Bson;
@@ -35,23 +37,26 @@ for (int i = 0; i < 10; i++)
     };
     locations.Add(location);
 }
+IPasswordService pwService= new PasswordService();
 // Generate 50 mock Employee records
-var employees = new List<Employee>();
-for (int i = 0; i < 500; i++)
+var employees = new List<User>();
+for (int i = 0; i < 50; i++)
 {
     var firstName = faker.Name.FirstName();
     var lastName = faker.Name.LastName();
     var phoneNumber = faker.Phone.PhoneNumber("(###) ###-####");
-
-    var employee = fixture.Build<Employee>()
+    string role = faker.PickRandom(RoleConstants.ValidRoles.ToArray());
+    var registrationInfo = fixture.Build<UserRegistrationInfo>()
         .With(e => e.FirstName, firstName)
         .With(e => e.LastName, lastName)
         .With(e => e.PhoneNumber, phoneNumber)
-        .With(e => e.EmployeeRole, faker.PickRandom(RoleConstants.ValidRoles.ToArray()))
-        .With(e => e.Id, ObjectId.GenerateNewId()) // Exclude Id property from being set
+        .With(e => e.EmployeeRole, role)
+        .With(e => e.Email, faker.Internet.Email(firstName, lastName))
         .Create();
-
-    employees.Add(employee);
+    var password = pwService.HashPassword(pwService.GenerateRandomPassword(12));
+    var user = new User(registrationInfo, password);
+    user.Id = ObjectId.GenerateNewId();
+    employees.Add(user);
 }
 
 // Generate 50 mock Shift records
@@ -100,8 +105,8 @@ var db = new MongoClient(settings.GetClientSettings()).GetDatabase(settings.Data
 // comment these lines out to make more new data instead of dropping old data
 db.DropCollection(CollectionConstants.LocationsCollection);
 db.DropCollection(CollectionConstants.ShiftsCollection);
-db.DropCollection(CollectionConstants.EmployeesCollection);
+db.DropCollection(CollectionConstants.UsersCollection);
 
 db.GetCollection<ShiftLocation>(CollectionConstants.LocationsCollection).InsertMany(locations);
 db.GetCollection<Shift>(CollectionConstants.ShiftsCollection).InsertMany(shifts);
-db.GetCollection<Employee>(CollectionConstants.EmployeesCollection).InsertMany(employees);
+db.GetCollection<User>(CollectionConstants.UsersCollection).InsertMany(employees);
