@@ -2,6 +2,7 @@
 using API.Constants.Errors;
 using API.Errors;
 using API.Models.Shifts;
+using API.Models.Users;
 using API.Utils;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -16,12 +17,14 @@ public interface IShiftScheduler
     void CreateShift(ShiftCreationInfo shift, out Shift createdShift);
     void DeleteShift(ObjectId shiftID);
 }
-public class ShiftScheduler(ILogger<ShiftScheduler> logger, IEntityRetriever entityRetriever, IAvailabiltyService availabiltyService) : IShiftScheduler
+public class ShiftScheduler(ILogger<ShiftScheduler> logger, IEntityRetriever entityRetriever, IAvailabiltyService availabiltyService,IEmailService email,IUserService userService) : IShiftScheduler
 {
     private readonly IEntityRetriever _entityRetriever = entityRetriever;
     private readonly ICollectionsProvider _collectionsProvider = entityRetriever.CollectionsProvider;
     private readonly IAvailabiltyService _availabiltyService = availabiltyService;
     private readonly ILogger<ShiftScheduler> _logger = logger;
+    private readonly IEmailService _emailService = email;
+    private readonly IUserService _userService = userService;
 
     /// <summary>
     /// Assigns an employee to a shift in the database
@@ -52,6 +55,9 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger, IEntityRetriever ent
             _logger.LogInformation($"Failed to assign ");
             throw new DCCApiException(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
         }
+        var user = _userService.GetUserById((ObjectId)assignment.EmployeeID );
+        var shift=_entityRetriever.GetEntityOrThrow(_collectionsProvider.Shifts,assignment.ShiftID );
+        _emailService.SendEmailAsync(user.Email,$"Shift Assigned to you on {shift.ShiftPeriod.Start.Date.ToLongDateString()}",$"You have been assigned a shift.\n{shift.Summary()}");
         //TODO: Notify employee
     }
     public void CreateShift(ShiftCreationInfo shiftCreation, out Shift createdShift)
@@ -93,7 +99,8 @@ public class ShiftScheduler(ILogger<ShiftScheduler> logger, IEntityRetriever ent
         {
             throw new DCCApiException(ShiftSchedulerErrorConstants.ShiftAssignmentUpdateFailedError);
         }
-
+        var user = _userService.GetUserById((ObjectId)shift.EmployeeID);
+        _emailService.SendEmailAsync(user.Email, $"Shift Unassigned to you on {shift.ShiftPeriod.Start.Date.ToLongDateString()}", $"You have been assigned from a shift.\n{shift.Summary()}");
         //TODO: Notify employee
     }
 }

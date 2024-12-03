@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using API.Errors;
 using API.Constants;
 using API.Models.Users;
+using API.Services.Authentication;
 
 namespace API.Services
 {
@@ -13,6 +14,7 @@ namespace API.Services
         //Task<User> GetUserByEmailAsync(string email);
         User? GetUserByEmail(string email);
         public User GetUserById(ObjectId id);
+        public void UpdatePassword(ObjectId id, string newPassword);
         //public string GetUserRole(ObjectId id);
 
         ////Task<User> CreateUserAsync(User user);
@@ -25,13 +27,19 @@ namespace API.Services
     public class UserService : IUserService
     {
         private readonly ICollectionsProvider _collectionsProvider;
-
+        private readonly IPasswordService _passwordService;
+        private readonly ILogger<UserService> _logger;
         // Constructor to inject MongoDB collection for users
-        public UserService(ICollectionsProvider cp)
+        public UserService(ILogger<UserService> logger,ICollectionsProvider cp,IPasswordService passwordService)
         {
             _collectionsProvider = cp;
+            _passwordService = passwordService;
+            _logger = logger;
         }
-
+        public void UpdatePassword(ObjectId id, string newPassword)
+        {
+            _collectionsProvider.Users.UpdateOne(user => user.Id == id, Builders<User>.Update.Set(user => user.PasswordHash, _passwordService.HashPassword(newPassword)));
+        }
         // Get a user by email
         public User? GetUserByEmail(string email)
         {

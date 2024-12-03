@@ -65,4 +65,6 @@ public class Shift : MongoObject
     [BsonIgnoreIfNull]
     [JsonConverter(typeof(ObjectIdConverter))]
     public ObjectId? EmployeeID { get; set; }
+
+    public string Summary() {return $"Start: {ShiftPeriod.Start.ToLongDateString()}\nEnd: {ShiftPeriod.End.ToLongDateString()}"; } 
 }

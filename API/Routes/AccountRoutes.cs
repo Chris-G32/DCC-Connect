@@ -10,6 +10,7 @@ using Amazon.Runtime;
 using API.Services.Authentication;
 using API.Models.Users;
 using API.Utils;
+using API.Models;
 
 namespace API.Routes
 {
@@ -35,6 +36,13 @@ namespace API.Routes
 
                 return Results.Ok(userWithoutPassword);
 
+            }).RequireAuthorization(PolicyConstants.EmployeePolicy);
+
+            app.MapPut("password/reset", (PasswordReset newPassword, HttpRequest request) =>
+            {
+                var claims = AuthUtils.GetClaims(request);
+                _userService.UpdatePassword(claims.UserID, newPassword.NewPassword);
+                return Results.Ok("updated password");
             }).RequireAuthorization(PolicyConstants.EmployeePolicy);
             // User CRUD routes
             //app.MapGet(RouteConstants.GetUserRoute, Get);
